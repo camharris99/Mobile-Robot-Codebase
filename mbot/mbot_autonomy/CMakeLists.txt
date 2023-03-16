@@ -18,13 +18,36 @@ include(${LCM_USE_FILE})
 
 # MOTION CONTROLLER
 add_executable(motion_controller src/mbot/motion_controller.cpp)
+add_executable(drive_square src/mbot/drive_square.cpp)
+add_executable(cp_1 src/mbot/cp_1.cpp)
 
 target_link_libraries(motion_controller
   common_utils
   lcm
   mbot_lcm_msgs-cpp
 )
+
+target_link_libraries(drive_square
+  common_utils
+  lcm
+  mbot_lcm_msgs-cpp
+)
+
+target_link_libraries(cp_1
+  common_utils
+  lcm
+  mbot_lcm_msgs-cpp
+)
+
 target_include_directories(motion_controller PRIVATE
+  include
+)
+
+target_include_directories(drive_square PRIVATE
+  include
+)
+
+target_include_directories(cp_1 PRIVATE
   include
 )
 
