@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     path.path[1] = nextPose;
 
     nextPose.x = .61f;
-    nextPose.y = 0.610f;
+    nextPose.y = -0.610f;
     nextPose.theta = 0.0f;
     path.path[2] = nextPose;
 
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     path.path[3] = nextPose;
 
     nextPose.x = nextPose.x;
-    nextPose.y = nextPose.y - 1.22f;
+    nextPose.y = nextPose.y + 1.22f;
     nextPose.theta = 0.0f;
     path.path[4] = nextPose;
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     path.path[5] = nextPose;
 
     nextPose.x = nextPose.x;
-    nextPose.y = nextPose.y + 1.22f;
+    nextPose.y = nextPose.y - 1.22f;
     nextPose.theta = 0.0f;
     path.path[6] = nextPose;
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     path.path[7] = nextPose;
 
     nextPose.x = nextPose.x;
-    nextPose.y = nextPose.y - .61f;
+    nextPose.y = nextPose.y + .61f;
     nextPose.theta = 0.0f;
     path.path[8] = nextPose;
 
