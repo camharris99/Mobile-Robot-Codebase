@@ -20,50 +20,51 @@ int main(int argc, char** argv)
     std::cout << "Commanding robot to drive around 1m square " << numTimes << " times.\n";
     
     mbot_lcm_msgs::robot_path_t path;
-    path.path.resize(numTimes * 4);
+    path.path.resize(9);
     
     mbot_lcm_msgs::pose_xyt_t nextPose;
-    
-    nextPose.x = 1.0f;
+    nextPose.x = .61f;
     nextPose.y = 0.0f;
     nextPose.theta = 0.0f;
-    for(int n = 0; n < numTimes; ++n)
-    {
-        path.path[4*n] = nextPose;
-    }
-    
-    nextPose.x = 1.0f;
-    nextPose.y = 1.0f;
+    path.path[0] = nextPose;
+
+    nextPose.x = .61f;
+    nextPose.y = 0.610f;
     nextPose.theta = 0.0f;
-    for(int n = 0; n < numTimes; ++n)
-    {
-        path.path[4*n + 1] = nextPose;
-    }
-    
-    nextPose.x = 0.0f;
-    nextPose.y = 1.0f;
-    nextPose.theta = 0.0f;
-    for(int n = 0; n < numTimes; ++n)
-    {
-        path.path[4*n + 2] = nextPose;
-    }
-    
-    nextPose.x = 0.0f;
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
     nextPose.y = 0.0f;
     nextPose.theta = 0.0f;
-    for(int n = 0; n < numTimes; ++n)
-    {
-        path.path[4*n + 3] = nextPose;
-    }
-    
-    // Return to original heading after completing all circuits
-//    nextPose.theta = 0.0f;
-//    path.path.push_back(nextPose);
-    
-    nextPose.x = 0.0f;
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
     nextPose.y = 0.0f;
     nextPose.theta = 0.0f;
-    path.path.insert(path.path.begin(), nextPose);
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
+    nextPose.y = 0.0f;
+    nextPose.theta = 0.0f;
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
+    nextPose.y = 0.0f;
+    nextPose.theta = 0.0f;
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
+    nextPose.y = 0.0f;
+    nextPose.theta = 0.0f;
+    path.path[1] = nextPose;
+
+    nextPose.x = .61f;
+    nextPose.y = 0.0f;
+    nextPose.theta = 0.0f;
+    path.path[1] = nextPose;
+
+
+
     
     path.path_length = path.path.size();
     
