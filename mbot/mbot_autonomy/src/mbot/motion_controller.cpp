@@ -147,7 +147,7 @@ class SmartManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float pid[3] = {0.9, 2.6, 0.01}; //kp, ka, kb
+    float pid[3] = {0.9, 2.6, 0.1}; //kp, ka, kb
     float d_end_crit = 0.02;
     float d_end_midsteps = 0.08;
     float angle_end_crit = 0.2;
@@ -164,11 +164,11 @@ public:
 
         // // To avoid weird behaviour at alpha=pi/2, because it is a common case
         float margin = 2 * M_PI / 180;
-        // if (fabs(alpha) > M_PI_2 + margin)
-        // {
-        //     alpha = wrap_to_pi(alpha - M_PI);
-        //     vel_sign = -1;
-        // }
+        if (fabs(alpha) > M_PI_2 + margin)
+        {
+            alpha = wrap_to_pi(alpha - M_PI);
+            vel_sign = -1;
+        }
         float beta = wrap_to_pi(target.theta -(alpha + pose.theta));
         float fwd_vel = vel_sign *  pid[0] * d_fwd;
         float turn_vel = pid[1] * alpha + pid[2] * beta;
