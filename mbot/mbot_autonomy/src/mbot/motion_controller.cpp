@@ -147,7 +147,7 @@ class SmartManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float pid[3] = {1.0, 2.5, 0.0}; //kp, ka, kb
+    float pid[3] = {0.8, 2.8, -0.0001}; //kp, ka, kb
     float d_end_crit = 0.02;
     float d_end_midsteps = 0.08;
     float angle_end_crit = 0.2;
@@ -362,6 +362,7 @@ private:
     {
         if(!targets_.empty()) { targets_.pop_back(); }
         state_ = SMART; 
+        //state_ = INITIAL_TURN;
         return !targets_.empty();
     }
     
@@ -416,16 +417,16 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             //Fwd vel & Angular vel fast
-            if (cmd.trans_v > 0.7) cmd.trans_v = 0.7;
-            else if (cmd.trans_v < -0.7) cmd.trans_v = -0.7;
+            // if (cmd.trans_v > 0.8) cmd.trans_v = 0.8;
+            // else if (cmd.trans_v < -0.8) cmd.trans_v = -0.8;
 
-            float max_ang_vel = M_PI;
+            // float max_ang_vel = M_PI;
 
             // Fwd vel & Angular vel slow
-            // if (cmd.trans_v > 0.3) cmd.trans_v = 0.3;
-            // else if (cmd.trans_v < -0.3) cmd.trans_v = -0.3;
+            if (cmd.trans_v > 0.3) cmd.trans_v = 0.3;
+            else if (cmd.trans_v < -0.3) cmd.trans_v = -0.3;
 
-            // float max_ang_vel = M_PI * 2.0 / 3.0;
+            float max_ang_vel = M_PI * 2.0 / 3.0;
 
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
