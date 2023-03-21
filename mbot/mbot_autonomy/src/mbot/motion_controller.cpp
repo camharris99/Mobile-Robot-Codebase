@@ -32,7 +32,7 @@
  *  - Add a rotation element to the StratingManeuverController
  *      to maintian a avoid deviating from the intended path.
  *  - Limit (min max) the speeds that your robot is commanded
- *      to avoid commands to slow for your bots or ones too high
+ *      to avoid commands too slow for your bots or ones too high
  */
 ///////////////////////////////////////////////////////////
 
@@ -40,7 +40,7 @@ class StraightManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float fwd_pid[3] = {1.0, 0, 0};
+    float fwd_pid[3] = {1.5, 0, 0};
     float fwd_sum_error = 0;
     float fwd_last_error = 0;
     float turn_pid[3] = {3.0, 0, 0};
@@ -147,7 +147,7 @@ class SmartManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float pid[3] = {1.0, 2.5, 0.0}; //kp, ka, kb
+    float pid[3] = {1.0, 2.5, -0.0001}; //kp, ka, kb
     float d_end_crit = 0.02;
     float d_end_midsteps = 0.08;
     float angle_end_crit = 0.2;
@@ -163,7 +163,7 @@ public:
         // printf("alpha: %f\n", alpha);
 
         // // To avoid weird behaviour at alpha=pi/2, because it is a common case
-        // float margin = 2 * M_PI / 180;
+        float margin = 2 * M_PI / 180;
         // if (fabs(alpha) > M_PI_2 + margin)
         // {
         //     alpha = wrap_to_pi(alpha - M_PI);
@@ -416,11 +416,13 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             // Fwd vel
-            if (cmd.trans_v > 0.3) cmd.trans_v = 0.3;
-            else if (cmd.trans_v < -0.3) cmd.trans_v = -0.3;
+
+            float max_trans = 0.3;
+            if (cmd.trans_v > max_trans) cmd.trans_v = max_trans;
+            else if (cmd.trans_v < -max_trans) cmd.trans_v = -max_trans; 
 
             // Angular vel
-            float max_ang_vel = M_PI * 2.0 / 3.0;
+            float max_ang_vel = M_PI; //q * 2.0 / 3.0;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 
