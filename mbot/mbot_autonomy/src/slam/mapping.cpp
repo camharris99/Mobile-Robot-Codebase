@@ -108,13 +108,11 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
         if (e2 >= -dy) {
             err -= dy;
             x += sx;
-
         }
 
         if (e2 <= dx) {
             err += dx;
             y += sy;
-
         }
     }
 
