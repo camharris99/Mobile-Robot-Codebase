@@ -22,6 +22,7 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
 
     for(auto& ray : movingScan) {
         scoreEndpoint(ray, map);
+        scoreRay(ray, map);
     }
 
 }
@@ -44,13 +45,24 @@ void Mapping::scoreEndpoint(const adjusted_ray_t& ray, OccupancyGrid& map)
     end_cell.x = static_cast<int>(f_end.x);
     end_cell.y = static_cast<int>(f_end.y);
     float value = map.logOdds(end_cell.x, end_cell.y);
-    map.setLogOdds(end_cell.x, end_cell.y, value+kHitOdds_);
+    if (value <= (127 - kHitOdds_)) {
+        map.setLogOdds(end_cell.x, end_cell.y, value+kHitOdds_);
+    }
     
 }
 
 void Mapping::scoreRay(const adjusted_ray_t& ray, OccupancyGrid& map)
 {
-//////////////// TODO: Implement your ray score ///////////////////////
+    //////////////// TODO: Implement your ray score ///////////////////////
+    std::vector<Point<int>> cells_touched = bresenham(ray, map);
+    float value;
+    for (Point<int> point : cells_touched) {
+        value = map.logOdds(point.x, point.y);
+        if (value >= (-127 + kMissOdds_)) {
+            map.setLogOdds(point.x, point.y, value-kMissOdds_);
+        }
+    }
+
 }
 
 /*
@@ -74,6 +86,38 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     end_cell.y = static_cast<int>(f_end.y);
     std::vector<Point<int>> cells_touched;
     //////////////// TODO: Implement Bresenham's Algorithm ////////////////
+
+    int x0 = start_cell.x;
+    int y0 = start_cell.y;
+    int x1 = end_cell.x;
+    int y1 = end_cell.y;
+    int dx = abs(x1-x0);
+    int dy = abs(y1-y0);
+    int sx = x0<x1 ? 1 : -1;
+    int sy = y0<y1 ? 1 : -1;
+    int err = dx-dy;
+    int x = x0;
+    int y = y0;
+    Point<int> cur_cell;
+    while(x != x1 || y != y1) {
+        cur_cell.x = x;
+        cur_cell.y = y;
+        cells_touched.push_back(cur_cell);
+        int e2 = 2*err;
+
+        if (e2 >= -dy) {
+            err -= dy;
+            x += sx;
+
+        }
+
+        if (e2 <= dx) {
+            err += dx;
+            y += sy;
+
+        }
+    }
+
     return cells_touched;
 }
 
