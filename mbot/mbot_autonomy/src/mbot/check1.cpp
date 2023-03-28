@@ -23,46 +23,50 @@ int main(int argc, char** argv)
     path.path.resize(9);
     
     mbot_lcm_msgs::pose_xyt_t nextPose;
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
+    nextPose.x = 0.61f;
+    nextPose.y = 0.61f*0;
     nextPose.theta = 0.0f;
     path.path[0] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.610f;
+    nextPose.x = 0.61f;
+    nextPose.y = 0.61f;
     nextPose.theta = 0.0f;
     path.path[1] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*2;
+    // nextPose.y = 0.61f;
+    // nextPose.theta = 0.0f;
+    // path.path[2] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*2;
+    // nextPose.y = 0.61f*-1;
+    // nextPose.theta = 0.0f;
+    // path.path[3] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*3;
+    // nextPose.y = 0.61f*-1;
+    // nextPose.theta = 0.0f;
+    // path.path[4] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*3;
+    // nextPose.y = 0.61f;
+    // nextPose.theta = 0.0f;
+    // path.path[5] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*4;
+    // nextPose.y = 0.61f;
+    // nextPose.theta = 0.0f;
+    // path.path[6] = nextPose;
 
-    nextPose.x = .61f;
-    nextPose.y = 0.0f;
-    nextPose.theta = 0.0f;
-    path.path[1] = nextPose;
+    // nextPose.x = 0.61f*5;
+    // nextPose.y = 0.61f*0;
+    // nextPose.theta = 0.0f;
+    // path.path[7] = nextPose;
 
+    // nextPose.x = 0.61f*6;
+    // nextPose.y = 0.61f*0;
+    // nextPose.theta = 0.0f;
+    // path.path[8] = nextPose;
 
 
     

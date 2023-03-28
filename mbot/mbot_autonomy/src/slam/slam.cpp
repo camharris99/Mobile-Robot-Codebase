@@ -139,7 +139,8 @@ void OccupancyGridSLAM::handleLaser(const lcm::ReceiveBuffer* rbuf, const std::s
     bool havePose = (mode_ == mapping_only) // For mapping-only, ground-truth poses are needed
                     && !groundTruthPoses_.empty()
                     && (groundTruthPoses_.front().utime <= scan->times.front());
-
+    //printf("ground %i",(!groundTruthPoses_.empty()));
+    //printf("time %i",(groundTruthPoses_.front().utime <= scan->times.front()));
     // If there's appropriate odometry or pose data for this scan, then add it to the queue.
     if(haveOdom || havePose)
     {

@@ -54,9 +54,10 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
     // Only update the particles if motion was detected. If the robot didn't move, then
     // obviously don't do anything.
     bool hasRobotMoved = actionModel_.updateAction(odometry);
-
+    
     if(hasRobotMoved)
     {
+        printf("moved");
         auto prior = resamplePosteriorDistribution();
         auto proposal = computeProposalDistribution(prior);
         posterior_ = proposal;
@@ -96,6 +97,10 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
 {
     //////////// TODO: Implement your algorithm for creating the proposal distribution by sampling from the ActionModel
     ParticleList proposal;
+    for(auto pt: prior){
+        proposal.push_back(actionModel_.applyAction(pt));
+    }
+    
     return proposal;
 }
 
