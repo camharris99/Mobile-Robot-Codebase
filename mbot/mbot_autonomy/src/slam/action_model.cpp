@@ -42,7 +42,7 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 
     bool moved = 0;
 
-    if (sqrt((previousPose_.x*previousPose_.x) - (odometry.x*odometry.x)) > min_dist_ || sqrt((previousPose_.y*previousPose_.y) - (odometry.y*odometry.y)) > min_dist_ || sqrt((previousPose_.theta*previousPose_.theta) - (odometry.theta*odometry.theta)) > min_theta_) {
+    if (sqrt((previousPose_.x - odometry.x)*(previousPose_.x - odometry.x) - (previousPose_.y - odometry.y)*(previousPose_.y - odometry.y)) > min_dist_ || sqrt((previousPose_.y*previousPose_.y) - (odometry.y*odometry.y)) > min_dist_ || fabs(previousPose_.theta - odometry.theta) > min_theta_) {
         moved = 1;
         std::cout << "robot moved" << std::endl;
     } else {
