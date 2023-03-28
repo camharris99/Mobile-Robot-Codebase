@@ -59,9 +59,9 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
 
     if(hasRobotMoved)
     {
-        // auto prior = resamplePosteriorDistribution();
-        // auto proposal = computeProposalDistribution(prior);
-        auto proposal = computeProposalDistribution(posterior_);
+        auto prior = resamplePosteriorDistribution();
+        auto proposal = computeProposalDistribution(prior);
+        // auto proposal = computeProposalDistribution(posterior_);
         posterior_ = proposal;
     }
 
@@ -101,7 +101,7 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
     ParticleList proposal;
 
     for (auto part : prior) {
-        std::cout << "in particle loop" << std::endl;
+        // std::cout << "in particle loop" << std::endl;
         proposal.push_back(actionModel_.applyAction(part));
     }
 

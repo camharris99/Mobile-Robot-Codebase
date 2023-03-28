@@ -37,10 +37,12 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     // calculate standard deviations
 
     std::cout << "prevP.x: " << previousPose_.x << ", odometry.x: " << odometry.x << std::endl;
+    std::cout << "prevP.y: " << previousPose_.y << ", odometry.y: " << odometry.y << std::endl;
+    std::cout << "prevP.t: " << previousPose_.theta << ", odometry.t: " << odometry.theta << std::endl;
 
     bool moved = 0;
 
-    if (previousPose_.x != odometry.x || previousPose_.y != odometry.y) {
+    if (sqrt((previousPose_.x*previousPose_.x) - (odometry.x*odometry.x)) > min_dist_ || sqrt((previousPose_.y*previousPose_.y) - (odometry.y*odometry.y)) > min_dist_ || sqrt((previousPose_.theta*previousPose_.theta) - (odometry.theta*odometry.theta)) > min_theta_) {
         moved = 1;
         std::cout << "robot moved" << std::endl;
     } else {
