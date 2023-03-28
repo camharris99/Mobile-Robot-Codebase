@@ -36,19 +36,21 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     // calculate deltas
     // calculate standard deviations
 
+    std::cout << "prevP.x: " << previousPose_.x << ", odometry.x: " << odometry.x << std::endl;
+
     bool moved = 0;
 
     if (previousPose_.x != odometry.x || previousPose_.y != odometry.y) {
         moved = 1;
+        std::cout << "robot moved" << std::endl;
     } else {
+        std::cout << "robot not moved" << std::endl;
         return moved;
     }
 
     dx_ = odometry.x - previousPose_.x;
     dy_ = odometry.y - previousPose_.y;
     dtheta_ = odometry.theta - previousPose_.theta;
-
-
 
     return moved;
 }
@@ -65,13 +67,15 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
 
     mbot_lcm_msgs::particle_t newSample = sample;
 
+    std::cout << "applying action" << std::endl;
+
     if (!ActionModel::updateAction(newSample.pose)) {
         return newSample;
     }
 
     previousPose_ = sample.pose;
     newSample.parent_pose = sample.pose;
-    // newSample.pose.utime = cur_pico_time;
+    newSample.pose.utime = sample.pose.utime;
 
     float ds = sqrt(dx_*dx_ + dy_*dy_);
     float alpha = atan2(dy_, dx_) - previousPose_.theta;
@@ -80,13 +84,17 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     std::normal_distribution<float> e2_dist(0.0, k2_*fabs(ds));
     std::normal_distribution<float> e3_dist(0.0, k1_*fabs(dtheta_ - alpha));
 
-    float e1 = e1_dist(gen);
-    float e2 = e2_dist(gen);
-    float e3 = e3_dist(gen);
+    e1_ = e1_dist(gen);
+    e2_ = e2_dist(gen);
+    e3_ = e3_dist(gen);
 
-    newSample.pose.x = newSample.parent_pose.x + ((ds + e2)*cos(newSample.parent_pose.theta + alpha + e1));
-    newSample.pose.y = newSample.parent_pose.y + ((ds + e2)*sin(newSample.parent_pose.theta + alpha + e1));
-    newSample.pose.theta = newSample.parent_pose.theta + (dtheta_ + e1 + e3);
+    newSample.pose.x = newSample.parent_pose.x + ((ds + e2_)*cos(newSample.parent_pose.theta + alpha + e1_));
+    newSample.pose.y = newSample.parent_pose.y + ((ds + e2_)*sin(newSample.parent_pose.theta + alpha + e1_));
+    newSample.pose.theta = newSample.parent_pose.theta + (dtheta_ + e1_ + e3_);
+
+    std::cout << "rnd e1: " << e1_ << ", rnd e2: " <<  e2_ << ", rnd e3: " << e3_ << std::endl;
+    std::cout << "cur x: " << sample.pose.x << ", cur y: " << sample.pose.y << ", cur t:" << sample.pose.theta << std::endl;
+    std::cout << "new x: " << newSample.pose.x << ", new y: " << newSample.pose.y << ", new t:" << newSample.pose.theta << std::endl;
 
     return newSample;
 }

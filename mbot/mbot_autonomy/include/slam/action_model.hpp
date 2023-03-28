@@ -72,9 +72,9 @@ private:
 
     std::mt19937 numberGenerator_;
 
-    float xStd_;
-    float yStd_;
-    float thetaStd_;
+    float e1_;
+    float e2_;
+    float e3_;
 };
 
 #endif // SLAM_ACTION_MODEL_HPP

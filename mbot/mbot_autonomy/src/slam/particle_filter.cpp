@@ -37,6 +37,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
                                                         const mbot_lcm_msgs::lidar_t& laser,
                                                         const OccupancyGrid& map)
 {
+
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
     auto prior = resamplePosteriorDistribution(&map);
@@ -53,12 +54,14 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
 {
     // Only update the particles if motion was detected. If the robot didn't move, then
     // obviously don't do anything.
+
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
     if(hasRobotMoved)
     {
-        auto prior = resamplePosteriorDistribution();
-        auto proposal = computeProposalDistribution(prior);
+        // auto prior = resamplePosteriorDistribution();
+        // auto proposal = computeProposalDistribution(prior);
+        auto proposal = computeProposalDistribution(posterior_);
         posterior_ = proposal;
     }
 
@@ -96,6 +99,12 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
 {
     //////////// TODO: Implement your algorithm for creating the proposal distribution by sampling from the ActionModel
     ParticleList proposal;
+
+    for (auto part : prior) {
+        std::cout << "in particle loop" << std::endl;
+        proposal.push_back(actionModel_.applyAction(part));
+    }
+
     return proposal;
 }
 
