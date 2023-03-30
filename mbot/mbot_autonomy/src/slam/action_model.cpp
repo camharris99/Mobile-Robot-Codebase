@@ -30,7 +30,7 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t &odometry)
     float dx = odometry.x - previousPose_.x;
     float dy = odometry.y - previousPose_.y;
     float ds = sqrt(dx * dx + dy * dy);
-    printf("%4.2f, %4.2f\n", ds,odometry.theta - previousPose_.theta);
+    //printf("%4.2f, %4.2f\n", ds,odometry.theta - previousPose_.theta);
     if ((ds > min_dist_) || (fabs(previousPose_.theta - odometry.theta) > min_theta_))
     {
         moved = 1;
