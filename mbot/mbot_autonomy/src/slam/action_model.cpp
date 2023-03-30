@@ -36,17 +36,17 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
     // calculate deltas
     // calculate standard deviations
 
-    std::cout << "prevP.x: " << previousPose_.x << ", odometry.x: " << odometry.x << std::endl;
-    std::cout << "prevP.y: " << previousPose_.y << ", odometry.y: " << odometry.y << std::endl;
-    std::cout << "prevP.t: " << previousPose_.theta << ", odometry.t: " << odometry.theta << std::endl;
+    // std::cout << "prevP.x: " << previousPose_.x << ", odometry.x: " << odometry.x << std::endl;
+    // std::cout << "prevP.y: " << previousPose_.y << ", odometry.y: " << odometry.y << std::endl;
+    // std::cout << "prevP.t: " << previousPose_.theta << ", odometry.t: " << odometry.theta << std::endl;
 
     bool moved = 0;
 
     if (sqrt((previousPose_.x - odometry.x)*(previousPose_.x - odometry.x) - (previousPose_.y - odometry.y)*(previousPose_.y - odometry.y)) > min_dist_ || sqrt((previousPose_.y*previousPose_.y) - (odometry.y*odometry.y)) > min_dist_ || fabs(previousPose_.theta - odometry.theta) > min_theta_) {
         moved = 1;
-        std::cout << "robot moved" << std::endl;
+        // std::cout << "robot moved" << std::endl;
     } else {
-        std::cout << "robot not moved" << std::endl;
+        // std::cout << "robot not moved" << std::endl;
         return moved;
     }
 
@@ -69,7 +69,7 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
 
     mbot_lcm_msgs::particle_t newSample = sample;
 
-    std::cout << "applying action" << std::endl;
+    // std::cout << "applying action" << std::endl;
 
     if (!ActionModel::updateAction(newSample.pose)) {
         return newSample;
@@ -94,9 +94,9 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     newSample.pose.y = newSample.parent_pose.y + ((ds + e2_)*sin(newSample.parent_pose.theta + alpha + e1_));
     newSample.pose.theta = newSample.parent_pose.theta + (dtheta_ + e1_ + e3_);
 
-    std::cout << "rnd e1: " << e1_ << ", rnd e2: " <<  e2_ << ", rnd e3: " << e3_ << std::endl;
-    std::cout << "cur x: " << sample.pose.x << ", cur y: " << sample.pose.y << ", cur t:" << sample.pose.theta << std::endl;
-    std::cout << "new x: " << newSample.pose.x << ", new y: " << newSample.pose.y << ", new t:" << newSample.pose.theta << std::endl;
+    // std::cout << "rnd e1: " << e1_ << ", rnd e2: " <<  e2_ << ", rnd e3: " << e3_ << std::endl;
+    // std::cout << "cur x: " << sample.pose.x << ", cur y: " << sample.pose.y << ", cur t:" << sample.pose.theta << std::endl;
+    // std::cout << "new x: " << newSample.pose.x << ", new y: " << newSample.pose.y << ", new t:" << newSample.pose.theta << std::endl;
 
     return newSample;
 }
