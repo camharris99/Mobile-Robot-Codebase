@@ -68,13 +68,16 @@ private:
     double dtheta_;
     uint64_t utime_;
 
+    double ds_; 
+    double alpha_;
+
     bool initialized_;
 
     std::mt19937 numberGenerator_;
 
-    float xStd_;
-    float yStd_;
-    float thetaStd_;
+    float e1_;
+    float e2_;
+    float e3_;
 };
 
 #endif // SLAM_ACTION_MODEL_HPP
