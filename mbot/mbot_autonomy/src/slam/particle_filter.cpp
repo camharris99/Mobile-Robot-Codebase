@@ -4,6 +4,8 @@
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <cassert>
+#include <common_utils/geometric/angle_functions.hpp>
+
 
 
 ParticleFilter::ParticleFilter(int numParticles)
@@ -20,6 +22,17 @@ ParticleFilter::ParticleFilter(int numParticles)
 void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pose)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
+    double sampleweight = 1.0 / kNumParticles_;
+    posteriorPose_ = pose;
+    for(auto &p : posterior_){
+        p.pose.x = posteriorPose_.x;
+        p.pose.y = posteriorPose_.y;
+        p.pose.theta = wrap_to_pi(posteriorPose_.theta);
+        p.pose.utime = pose.utime;
+        p.parent_pose = p.pose;
+        p.weight = sampleweight;
+
+    }
 }
 
 void ParticleFilter::initializeFilterRandomly(const OccupancyGrid& map)
@@ -54,12 +67,13 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
     // Only update the particles if motion was detected. If the robot didn't move, then
     // obviously don't do anything.
     bool hasRobotMoved = actionModel_.updateAction(odometry);
-    
+    printf("%i/n",hasRobotMoved);
     if(hasRobotMoved)
     {
         printf("moved");
         auto prior = resamplePosteriorDistribution();
         auto proposal = computeProposalDistribution(prior);
+        //proposal = computeProposalDistribution(posterior_);
         posterior_ = proposal;
     }
 
@@ -89,6 +103,20 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
 {
     //////////// TODO: Implement your algorithm for resampling from the posterior distribution ///////////////////
     ParticleList prior;
+    prior = posterior_;
+    double sampleweight = 1.0 / kNumParticles_;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<float> dist(0.0, 0.01);
+    for(auto& p :prior){
+        p.pose.x = posteriorPose_.x + dist(gen);
+        p.pose.y = posteriorPose_.y + dist(gen);
+        p.pose.theta = wrap_to_pi(posteriorPose_.theta + dist(gen));
+        p.pose.utime = posteriorPose_.utime;
+        p.parent_pose = posteriorPose_;
+        p.weight = sampleweight;
+
+    }
     return prior;
 }
 

@@ -27,10 +27,14 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t &odometry)
     // calculate standard deviations
 
     bool moved = 0;
-    printf("%4.2f, %4.2f, %4.2f\n", odometry.x - previousPose_.x,odometry.y - previousPose_.y,odometry.theta - previousPose_.theta);
-    if (previousPose_.x != odometry.x || previousPose_.y != odometry.y || previousPose_.theta != odometry.theta)
+    float dx = odometry.x - previousPose_.x;
+    float dy = odometry.y - previousPose_.y;
+    float ds = sqrt(dx * dx + dy * dy);
+    printf("%4.2f, %4.2f\n", ds,odometry.theta - previousPose_.theta);
+    if ((ds > min_dist_) || (fabs(previousPose_.theta - odometry.theta) > min_theta_))
     {
         moved = 1;
+       
         dx_ = odometry.x - previousPose_.x;
         dy_ = odometry.y - previousPose_.y;
         dtheta_ = odometry.theta - previousPose_.theta;
@@ -39,7 +43,7 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t &odometry)
     {
         moved = 0;
     }
-
+    
     return moved;
 }
 
@@ -74,10 +78,10 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     float e1 = e1_dist(gen);
     float e2 = e2_dist(gen);
     float e3 = e3_dist(gen);
-    printf("%4.2f, %4.2f, %4.2f\n", e1,e2,e3);
+    //printf("gen %4.2f, %4.2f, %4.2f\n", e1,e2,e3);
     newSample.pose.x = newSample.parent_pose.x + ((ds + e2) * cos(newSample.parent_pose.theta + alpha + e1));
     newSample.pose.y = newSample.parent_pose.y + ((ds + e2) * sin(newSample.parent_pose.theta + alpha + e1));
-    newSample.pose.theta = newSample.parent_pose.theta + (dtheta_ + e1 + e3);
-
+    newSample.pose.theta = wrap_to_pi(newSample.parent_pose.theta + (dtheta_ + e1 + e3));
+    newSample.pose.utime = utime_;
     return newSample;
 }
