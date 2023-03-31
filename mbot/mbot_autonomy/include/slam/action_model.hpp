@@ -76,6 +76,17 @@ private:
     float e1_;
     float e2_;
     float e3_;
+
+    double rot1_;
+    double trans_;
+    double rot2_;
+
+    bool moved_;
+
+    double rot1Std_;
+    double transStd_;
+    double rot2Std_;
+
 };
 
 #endif // SLAM_ACTION_MODEL_HPP
