@@ -16,5 +16,18 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
     double likelihood = 0.0;
     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
     // TODO
-    return likelihood;
+    double scanscore;
+
+    for(auto& ray: movingScan){
+        Point<double> endpoint(ray.origin.x + ray.range * cos(ray.theta),
+        ray.origin.y + ray.range * sin(ray.theta));
+
+        auto rayEnd = global_position_to_grid_position(endpoint,map);
+        if(map.logOdds(rayEnd.x,rayEnd.y)>0.0){
+            scanscore += 1.0;
+        }
+    }
+
+
+    return scanscore;
 }
