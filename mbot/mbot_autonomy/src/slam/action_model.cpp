@@ -9,8 +9,8 @@
 
 
 ActionModel::ActionModel(void)
-: k1_(0.1f)
-, k2_(0.1f)
+: k1_(0.8f)
+, k2_(0.4f)
 , min_dist_(0.0025)
 , min_theta_(0.002)
 , initialized_(false)
@@ -23,7 +23,7 @@ ActionModel::ActionModel(void)
 
 void ActionModel::resetPrevious(const mbot_lcm_msgs::pose_xyt_t& odometry)
 {
-    previousPose_ = odometry;
+    previousOdometry_ = odometry;
 }
 
 
@@ -44,12 +44,12 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
         initialized_ = true;
     }
 
-    float deltaX = odometry.x - previousPose_.x;
-    float deltaY = odometry.y - previousPose_.y;
-    float deltaTheta = angle_diff(odometry.theta, previousPose_.theta);
+    float deltaX = odometry.x - previousOdometry_.x;
+    float deltaY = odometry.y - previousOdometry_.y;
+    float deltaTheta = angle_diff(odometry.theta, previousOdometry_.theta);
 
     trans_ = std::sqrt(deltaX * deltaX + deltaY * deltaY);
-    rot1_ = angle_diff(std::atan2(deltaY, deltaX), previousPose_.theta);
+    rot1_ = angle_diff(std::atan2(deltaY, deltaX), previousOdometry_.theta);
     float direction = 1.0;
 
     if (std::abs(rot1_) > M_PI/2.0) {
@@ -62,15 +62,21 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 
     // std::cout << "std::abs(deltaTheta) : " << std::abs(deltaTheta) << ": min_theta_" << min_theta_ << std::endl;
     
-    moved_ = (std::sqrt((deltaX*deltaX) + (deltaY*deltaY)) > min_dist_) || (std::abs(deltaTheta) > min_theta_);
+    // moved_ = (std::sqrt((deltaX*deltaX) + (deltaY*deltaY)) > min_dist_) || (std::abs(deltaTheta) > min_theta_);
 
-    rot1Std_ = k1_ * std::abs(rot1_);
-    transStd_ = k2_ * std::abs(trans_);
-    rot2Std_ = k1_ * std::abs(rot2_);
+    moved_ = (deltaX > min_dist_) || (deltaY > min_dist_) || (std::abs(deltaTheta) > min_theta_);
+
+    rot1Std_ = k1_ * std::fabs(rot1_);
+    transStd_ = k2_ * std::fabs(trans_);
+    rot2Std_ = k1_ * std::fabs(rot2_);
 
     trans_ *= direction;
-    previousPose_ = odometry;
+    previousOdometry_ = odometry;
     utime_ = odometry.utime;
+
+    // std::cout << "rot1std: " << rot1Std_ << std::endl;
+    // std::cout << "transstd: " << transStd_ << std::endl;
+    // std::cout << "rot2std: " << rot2Std_ << std::endl;
 
     return moved_;
 }
