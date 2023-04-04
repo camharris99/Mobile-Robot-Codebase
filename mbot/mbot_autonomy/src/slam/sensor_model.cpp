@@ -76,9 +76,9 @@ double SensorModel::scoreRay(const adjusted_ray_t& ray, const OccupancyGrid& map
 
 
         if(odd_before > 0.0)
-            score = 0.75 * odd_before;
+            score = 0.5 * odd_before;
         else if(odd_after > 0.0)
-            score = 0.75 * odd_after;
+            score = 0.5 * odd_after;
     }
     return score;
 }
