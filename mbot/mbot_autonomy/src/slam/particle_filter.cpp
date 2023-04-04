@@ -30,7 +30,7 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
 
     std::random_device rd;
     std::mt19937 generator(rd());
-    std::normal_distribution<> dist(0.0, 0.05);
+    std::normal_distribution<> dist(0.0, 0.02);
 
     for (auto& p : posterior_) {
         p.pose.x = posteriorPose_.x + dist(generator);
@@ -191,8 +191,8 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     ParticleList sorted_posterior = posterior;
 
     std::sort(sorted_posterior.begin(), sorted_posterior.end(), myobject);
-    sorted_posterior.erase(sorted_posterior.begin()+200,sorted_posterior.end());
-    pose = ParticleFilter::computeParticlesAverage(posterior);
+    sorted_posterior.erase(sorted_posterior.begin()+25,sorted_posterior.end());
+    pose = ParticleFilter::computeParticlesAverage(sorted_posterior);
 
     // pose.x = sorted_posterior.at(0).pose.x;
     // pose.y = sorted_posterior.at(0).pose.y;
@@ -220,47 +220,23 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::computeParticlesAverage(const Particle
     mbot_lcm_msgs::pose_xyt_t avg_pose;
     ParticleList particles = particles_to_average;
 
-    int num_particles = particles_to_average.size();
-
     double xMean = 0.0;
     double yMean = 0.0;
     double cosThetaMean = 0.0;
     double sinThetaMean = 0.0;
+    double weightSum = 0.0;
 
     for (auto& p : particles) {
-        p.weight *= kNumParticles_/num_particles;
         xMean += p.weight * p.pose.x;
         yMean += p.weight * p.pose.y;
         cosThetaMean += p.weight * std::cos(p.pose.theta);
         sinThetaMean += p.weight * std::sin(p.pose.theta);
+        weightSum += p.weight;
     }
 
-    // for (auto& p : particles_to_average) {
-    //     xMean += p.pose.x;
-    //     yMean += p.pose.y;
-    //     cosThetaMean += std::cos(p.pose.theta);
-    //     sinThetaMean += std::sin(p.pose.theta);
-    // }
-
-    // xMean /= (double)num_particles;
-    // yMean /= (double)num_particles;
-    // cosThetaMean /= (double)num_particles;
-    // sinThetaMean /= (double)num_particles;
-    
-    // avg_pose.x = xMean;
-    // avg_pose.y = yMean;
-    // avg_pose.theta = std::atan2(sinThetaMean, cosThetaMean);
-
-    // for (auto& p : particles_to_average) {
-    //     xMean += p.weight * p.pose.x;
-    //     yMean += p.weight * p.pose.y;
-    //     cosThetaMean += p.weight * std::cos(p.pose.theta);
-    //     sinThetaMean += p.weight * std::sin(p.pose.theta);
-    // }
-
-    avg_pose.x = xMean;
-    avg_pose.y = yMean;
-    avg_pose.theta = std::atan2(sinThetaMean, cosThetaMean);
+    avg_pose.x = xMean/weightSum;
+    avg_pose.y = yMean/weightSum;
+    avg_pose.theta = std::atan2(sinThetaMean/weightSum, cosThetaMean/weightSum);
 
     return avg_pose;
 }
