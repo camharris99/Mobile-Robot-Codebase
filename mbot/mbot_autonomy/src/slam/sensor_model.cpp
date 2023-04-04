@@ -5,7 +5,7 @@
 #include <utils/grid_utils.hpp>
 #include <common_utils/geometric/point.hpp>
 SensorModel::SensorModel(void)
-:   ray_stride_(1)
+:   ray_stride_(2)
 {
 }
 
@@ -25,22 +25,25 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample, const mb
 
 
 double SensorModel::scoreRay(const adjusted_ray_t& ray, const OccupancyGrid& map){
-    Point<float> ray_origin_grid = global_position_to_grid_position(ray.origin, map);
-    Point<int> ray_end;
-    Point<int> ray_extended;
 
-    ray_end.x = ray.range * std::cos(ray.theta) + ray_origin_grid.x;
-    ray_end.y = ray.range * std::sin(ray.theta) + ray_origin_grid.y;
+    Point<float> f_end = global_position_to_grid_position(Point<float>(ray.origin.x + ray.range * std::cos(ray.theta), ray.origin.y + ray.range * std::sin(ray.theta)), map);
+    Point<float> f_end_extended = global_position_to_grid_position(Point<float>(ray.origin.x + 2.0*ray.range * std::cos(ray.theta), ray.origin.y + 2.0*ray.range * std::sin(ray.theta)), map);
 
-    ray_extended.x = 1.5 * ray.range * std::cos(ray.theta) + ray_origin_grid.x;
-    ray_extended.y = 1.5 * ray.range * std::sin(ray.theta) + ray_origin_grid.y;
+    Point<int> start_cell = global_position_to_grid_cell(ray.origin, map);
+    Point<int> end_cell;
+    Point<int> end_cell_extended;
 
-    double odds_current_cell = map.logOdds(ray_end.x, ray_end.y);
+    end_cell.x = static_cast<int>(f_end.x);
+    end_cell.y = static_cast<int>(f_end.y);
+    end_cell_extended.x = static_cast<int>(f_end_extended.x);
+    end_cell_extended.y = static_cast<int>(f_end_extended.y);
+
+    double odds_current_cell = map.logOdds((end_cell.x), (end_cell.y));
 
     if (odds_current_cell <= 0.0) {
         odds_current_cell = 0.0;
-        int odds_prev_cell = getCellodds(ray_end.x, ray_end.y, ray_origin_grid.x, ray_origin_grid.y, map);
-        int odds_next_cell = getCellodds(ray_end.x, ray_end.y, ray_extended.x, ray_extended.y, map);
+        int odds_prev_cell = getCellodds(end_cell.x, end_cell.y, start_cell.x, start_cell.y, map);
+        int odds_next_cell = getCellodds(end_cell.x, end_cell.y, end_cell_extended.x, end_cell_extended.y, map);
 
         if (odds_prev_cell > 0.0) {
             odds_current_cell += 0.5 * odds_prev_cell;
@@ -49,6 +52,9 @@ double SensorModel::scoreRay(const adjusted_ray_t& ray, const OccupancyGrid& map
             odds_current_cell += 0.5 * odds_prev_cell;
         }
     }
+
+    // std::cout << "f_end: " << f_end.x << ", " << f_end.y << "... f_end_extended: "  << f_end_extended.x << ", " << f_end_extended.y << std::endl;
+
     return odds_current_cell;
 }
 
@@ -61,16 +67,27 @@ int SensorModel::getCellodds(int x0, int y0, int x1, int y1, const OccupancyGrid
     int err = dx-dy;
     int x = x0;
     int y = y0;
+    double factor;
 
     int e2 = 2*err;
-    if(e2 >= -dy){
-        err -= dy;
-        x += sx;
-    }
-    if(e2 <= dx){
-        err += dx;
-        y += sy;
+
+    float odds = 0.0;
+    for (int i = 0; i < 2; i++) {
+        if(e2 >= -dy){
+            err -= dy;
+            x += sx;
+        }
+        if(e2 <= dx){
+            err += dx;
+            y += sy;
+        }
+        if (i == 0) {
+            factor = 1;
+        } else {
+            factor = 0.5;
+        }
+        odds += factor*map.logOdds(x,y);
     }
 	
-    return map.logOdds(x,y);
+    return odds;
 }

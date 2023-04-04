@@ -1,11 +1,11 @@
 #include <utils/grid_utils.hpp>
 #include <slam/particle_filter.hpp>
 #include <slam/occupancy_grid.hpp>
+#include <common_utils/geometric/angle_functions.hpp>
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <cassert>
-#include <common_utils/geometric/angle_functions.hpp>
-
+#include <algorithm>
 
 struct myclass {
   bool operator() (mbot_lcm_msgs::particle_t i, mbot_lcm_msgs::particle_t j) { return (i.weight>j.weight);}
@@ -25,16 +25,20 @@ ParticleFilter::ParticleFilter(int numParticles)
 void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pose)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
-    double sampleweight = 1.0 / kNumParticles_;
+    double sampleWeight = 1.0 / kNumParticles_;
     posteriorPose_ = pose;
-    for(auto &p : posterior_){
-        p.pose.x = posteriorPose_.x;
-        p.pose.y = posteriorPose_.y;
-        p.pose.theta = wrap_to_pi(posteriorPose_.theta);
-        p.pose.utime = pose.utime;
-        p.parent_pose = p.pose;
-        p.weight = sampleweight;
 
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::normal_distribution<> dist(0.0, 0.05);
+
+    for (auto& p : posterior_) {
+        p.pose.x = posteriorPose_.x + dist(generator);
+        p.pose.y = posteriorPose_.y + dist(generator);
+        p.pose.theta = wrap_to_pi(posteriorPose_.theta + dist(generator)); // wrap to pi?
+        p.pose.utime = posteriorPose_.utime;
+        p.parent_pose = p.pose;
+        p.weight = sampleWeight;
     }
 }
 
@@ -53,13 +57,16 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
                                                         const mbot_lcm_msgs::lidar_t& laser,
                                                         const OccupancyGrid& map)
 {
+
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
-    auto prior = resamplePosteriorDistribution(&map);
-    auto proposal = computeProposalDistribution(prior);
-    posterior_ = computeNormalizedPosterior(proposal, laser, map);
-    // OPTIONAL TODO: Add reinvigoration step
-    posteriorPose_ = estimatePosteriorPose(posterior_);
+    if (hasRobotMoved) {
+        auto prior = resamplePosteriorDistribution(&map);
+        auto proposal = computeProposalDistribution(prior);
+        posterior_ = computeNormalizedPosterior(proposal, laser, map);
+        // OPTIONAL TODO: Add reinvigoration step
+        posteriorPose_ = estimatePosteriorPose(posterior_);
+    }
     posteriorPose_.utime = odometry.utime;
 
     return posteriorPose_;
@@ -69,14 +76,13 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilterActionOnly(const mbot_lcm_
 {
     // Only update the particles if motion was detected. If the robot didn't move, then
     // obviously don't do anything.
+
     bool hasRobotMoved = actionModel_.updateAction(odometry);
-    //printf("%i/n",hasRobotMoved);
+
     if(hasRobotMoved)
     {
-        //printf("moved");
         auto prior = resamplePosteriorDistribution();
         auto proposal = computeProposalDistribution(prior);
-        //proposal = computeProposalDistribution(posterior_);
         posterior_ = proposal;
     }
 
@@ -100,7 +106,6 @@ mbot_lcm_msgs::particles_t ParticleFilter::particles(void) const
     particles.particles = posterior_;
     return particles;
 }
-
 
 
 ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* map)
@@ -131,15 +136,15 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
 }
 
 
-
 ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& prior)
 {
     //////////// TODO: Implement your algorithm for creating the proposal distribution by sampling from the ActionModel
     ParticleList proposal;
-    for(auto pt: prior){
-        proposal.push_back(actionModel_.applyAction(pt));
+
+    for (auto & part : prior) {
+        proposal.push_back(actionModel_.applyAction(part));
     }
-    
+
     return proposal;
 }
 
@@ -151,22 +156,30 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     /////////// TODO: Implement your algorithm for computing the normalized posterior distribution using the
     ///////////       particles in the proposal distribution
     ParticleList posterior;
-    double sumWeight = 0;
-    double minimum = 0.00001;
-    for(auto& p :proposal){
-        auto weighted = p;
-        weighted.weight = sensorModel_.likelihood(weighted, laser, map);
+    double sumWeights = 0.0;
+    double minimum = 0.0001;
+
+    for (auto& p : proposal) {
+        mbot_lcm_msgs::particle_t weighted = p;
+        weighted.weight = sensorModel_.likelihood(p, laser, map);
         if (weighted.weight < minimum) {
             weighted.weight = minimum;
         }
-
-        sumWeight += weighted.weight;
+        sumWeights += weighted.weight;
         posterior.push_back(weighted);
     }
-    for(auto& p: posterior){
-        p.weight /= sumWeight;
+
+    // std::sort(posterior.begin(), posterior.end(), myobject);
+    // posterior.erase(posterior.begin()+50, posterior.end());
+    // std::cout << posterior.size() << std::endl;
+
+    for (auto& p : posterior) {
+        p.weight /= sumWeights;
+        // std::cout << "p.weight: " << p.weight << std::endl;
     }
-    //printf("%4.2f \n",sumWeight);
+
+    // std::cout << std::endl;
+ 
     return posterior;
 }
 
@@ -175,28 +188,28 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
 {
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
-    // double xMean = 0.0;
-    // double yMean = 0.0;
-    // double sinMean = 0.0;
-    // double cosMean = 0.0;
-    // for(auto& p:posterior){
-    //     xMean += p.weight * p.pose.x;
-    //     yMean += p.weight * p.pose.y;
-    //     sinMean += p.weight * sin(p.pose.theta);
-    //     cosMean += p.weight * cos(p.pose.theta);
-    // }
-    // pose.x = xMean;
-    // pose.y = yMean;
-    // pose.theta = atan2(sinMean,cosMean);
-    //printf("new pose: %4.2f, %4.2f,%4.2f\n", xMean,yMean,pose.theta);
- 
     ParticleList sorted_posterior = posterior;
 
     std::sort(sorted_posterior.begin(), sorted_posterior.end(), myobject);
     sorted_posterior.erase(sorted_posterior.begin()+200,sorted_posterior.end());
-    printf("%4.2f, %4.2f, %4.2f, %4.2f  \n",sorted_posterior[0].weight,sorted_posterior[1].weight,sorted_posterior[2].weight,sorted_posterior[3].weight);
-    pose = ParticleFilter::computeParticlesAverage(sorted_posterior);
+    pose = ParticleFilter::computeParticlesAverage(posterior);
 
+    // pose.x = sorted_posterior.at(0).pose.x;
+    // pose.y = sorted_posterior.at(0).pose.y;
+    // pose.theta = sorted_posterior.at(0).pose.theta;
+
+    // for (auto& p : posterior) {
+    //     xMean += p.weight * p.pose.x;
+    //     yMean += p.weight * p.pose.y;
+    //     cosThetaMean += p.weight * std::cos(p.pose.theta);
+    //     sinThetaMean += p.weight * std::sin(p.pose.theta);
+    // }
+
+    // pose.x = xMean;
+    // pose.y = yMean;
+    // pose.theta = std::atan2(sinThetaMean, cosThetaMean);
+
+    // std::cout << "xmean: " << xMean << ", ymean: " << yMean << ", theta: " << pose.theta << std::endl;
 
     return pose;
 }
@@ -222,11 +235,33 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::computeParticlesAverage(const Particle
         sinThetaMean += p.weight * std::sin(p.pose.theta);
     }
 
+    // for (auto& p : particles_to_average) {
+    //     xMean += p.pose.x;
+    //     yMean += p.pose.y;
+    //     cosThetaMean += std::cos(p.pose.theta);
+    //     sinThetaMean += std::sin(p.pose.theta);
+    // }
+
+    // xMean /= (double)num_particles;
+    // yMean /= (double)num_particles;
+    // cosThetaMean /= (double)num_particles;
+    // sinThetaMean /= (double)num_particles;
+    
+    // avg_pose.x = xMean;
+    // avg_pose.y = yMean;
+    // avg_pose.theta = std::atan2(sinThetaMean, cosThetaMean);
+
+    // for (auto& p : particles_to_average) {
+    //     xMean += p.weight * p.pose.x;
+    //     yMean += p.weight * p.pose.y;
+    //     cosThetaMean += p.weight * std::cos(p.pose.theta);
+    //     sinThetaMean += p.weight * std::sin(p.pose.theta);
+    // }
+
     avg_pose.x = xMean;
     avg_pose.y = yMean;
     avg_pose.theta = std::atan2(sinThetaMean, cosThetaMean);
 
-
-
     return avg_pose;
 }
+
