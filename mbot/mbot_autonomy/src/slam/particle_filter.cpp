@@ -51,11 +51,13 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
 
-    auto prior = resamplePosteriorDistribution(&map);
-    auto proposal = computeProposalDistribution(prior);
-    posterior_ = computeNormalizedPosterior(proposal, laser, map);
-    // OPTIONAL TODO: Add reinvigoration step
-    posteriorPose_ = estimatePosteriorPose(posterior_);
+    if(hasRobotMoved){
+        auto prior = resamplePosteriorDistribution(&map);
+        auto proposal = computeProposalDistribution(prior);
+        posterior_ = computeNormalizedPosterior(proposal, laser, map);
+        // OPTIONAL TODO: Add reinvigoration step
+        posteriorPose_ = estimatePosteriorPose(posterior_);
+    }
     posteriorPose_.utime = odometry.utime;
 
     return posteriorPose_;
@@ -116,6 +118,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         p.weight = sampleweight;
 
     }
+
     return prior;
 }
 
@@ -139,7 +142,7 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     /////////// TODO: Implement your algorithm for computing the normalized posterior distribution using the
     ///////////       particles in the proposal distribution
     ParticleList posterior;
-    double sumWeight = 0;
+    double sumWeight = 0.0;
     for(auto& p :proposal){
         auto weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
@@ -165,12 +168,12 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     for(auto& p:posterior){
         xMean += p.weight * p.pose.x;
         yMean += p.weight * p.pose.y;
-        sinMean += p.weight * sin(p.pose.theta);
-        cosMean += p.weight * cos(p.pose.theta);
+        sinMean += p.weight * std::sin(p.pose.theta);
+        cosMean += p.weight * std::cos(p.pose.theta);
     }
     pose.x = xMean;
     pose.y = yMean;
-    pose.theta = atan2(sinMean,cosMean);
+    pose.theta = std::atan2(sinMean,cosMean);
     //printf("new pose: %4.2f, %4.2f,%4.2f\n", xMean,yMean,pose.theta);
     return pose;
 }
