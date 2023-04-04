@@ -9,7 +9,7 @@
 
 
 ActionModel::ActionModel(void)
-    : k1_(0.3f), k2_(0.1f), min_dist_(0.0025), min_theta_(0.002), initialized_(false), dx_(0.0f), dy_(0.0f), dtheta_(0.0f)
+    : k1_(0.8f), k2_(0.4f), min_dist_(0.0025), min_theta_(0.002), initialized_(false), dx_(0.0f), dy_(0.0f), dtheta_(0.0f)
 {
     //////////////// TODO: Handle any initialization for your ActionModel /////////////////////////
     std::random_device rd;
