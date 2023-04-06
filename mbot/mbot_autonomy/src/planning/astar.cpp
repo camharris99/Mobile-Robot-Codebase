@@ -12,6 +12,24 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     cell_t goalCell = global_position_to_grid_cell(Point<double>(goal.x, goal.y), distances);
      ////////////////// TODO: Implement your A* search here //////////////////////////
     mbot_lcm_msgs::robot_path_t path;
+    
+    // if goal == start
+    //      return makePath(start)
+    // 
+    // open.push(start)
+    // closed.push(0) -- (empty)
+    // while (open != 0)
+    //      sort(open)
+    //      n = open.pop()
+    //      kids.expand(n)
+    //      for each "kid" in kids
+    //          kid.fscore = n.gscore + 1 + hscore(kid)
+    //          if kid == goal
+    //              return makePath(kid)
+    //          if kid is not in closed
+    //              open.push(kid)
+    //      closed.push(n)
+    
     return path;
 }
 

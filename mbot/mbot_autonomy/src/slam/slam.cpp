@@ -177,11 +177,6 @@ void OccupancyGridSLAM::handleLaser(const lcm::ReceiveBuffer* rbuf, const std::s
 void OccupancyGridSLAM::handleOdometry(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const mbot_lcm_msgs::odometry_t* odometry)
 {
     std::lock_guard<std::mutex> autoLock(dataMutex_);
-
-    // std::cout << "message received: odometryx: " << odometry->x << std::endl;
-    // std::cout << "message received: odometryy: " << odometry->y << std::endl;
-    // std::cout << "message received: odometryt: " << odometry->theta << std::endl;
-
     mbot_lcm_msgs::pose_xyt_t odomPose;
     odomPose.utime = odometry->utime;
     odomPose.x = odometry->x;
@@ -312,16 +307,10 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
 void OccupancyGridSLAM::updateLocalization(void)
 {
 
-    // std::cout << "currentOdom_: " << currentOdometry_.x << std::endl;
-    // std::cout << "currentOdom_: " << currentOdometry_.y << std::endl;
-    // std::cout << "currentOdom_: " << currentOdometry_.theta << std::endl;
     if(haveMap_ && (mode_ != mapping_only))
     {
         previousPose_ = currentPose_;
         if(mode_ == action_only){
-            // std::cout << "currentOdom_: " << currentOdometry_.x << std::endl;
-            // std::cout << "currentOdom_: " << currentOdometry_.y << std::endl;
-            // std::cout << "currentOdom_: " << currentOdometry_.theta << std::endl;
 
             currentPose_  = filter_.updateFilterActionOnly(currentOdometry_);
         }
