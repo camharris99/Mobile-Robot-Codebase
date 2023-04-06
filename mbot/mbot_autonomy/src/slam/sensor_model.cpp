@@ -5,7 +5,7 @@
 #include <utils/grid_utils.hpp>
 #include <common_utils/geometric/point.hpp>
 SensorModel::SensorModel(void)
-:   ray_stride_(2)
+:   ray_stride_(5)
 {
 }
 
