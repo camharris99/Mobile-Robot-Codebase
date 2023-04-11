@@ -20,7 +20,9 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     Node* startNode;
     Node* goalNode;
     Node* curNode;
-    bool iterate;
+    bool iterate = true;
+    std::cout << "iterate: " << iterate << std::endl;
+
 
     goalNode->cell = goalCell;
 
@@ -29,15 +31,13 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     path.path_length = path.path.size();
 
     startNode->cell = startCell;
-    startNode->h_cost = 0;
-    startNode->g_cost = 0;
+    startNode->h_cost = 0.0;
+    startNode->g_cost = 0.0;
     startNode->parent = NULL;
 
     Q.push(startNode);
 
     curNode = startNode;
-
-    iterate = true;
 
     while (iterate) { // if curNode == goalNode -> break
         curNode = Q.pop();
@@ -46,8 +46,10 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
             if (!is_in_list(neighbor, Q.elements)) {
                 neighbor->g_cost = g_cost(neighbor, goalNode, distances, params);
                 neighbor->h_cost = h_cost(neighbor, goalNode, distances);
+                std::cout << "h_cost: " << neighbor->h_cost << std::endl;
                 Q.push(neighbor);
                 if (neighbor == goalNode) {
+                    goalNode = neighbor;
                     iterate = false;
                 }
             }
@@ -64,7 +66,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
 {
     // TODO: Return calculated h cost
-    double h_cost = 0;
+    double h_cost = 0.0;
     double dx = std::fabs(from->cell.x - goal->cell.x);
     double dy = std::fabs(from->cell.y - goal->cell.y);
     h_cost = (dx+dy)+(1.414-2.0)*std::min(dx,dy);
@@ -73,8 +75,8 @@ double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
 double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return calculated g cost
-    double g_cost = 0;   
-    double distAdd = 1;
+    double g_cost = 0.0;   
+    double distAdd = 1.0;
     if (from->cell.x != from->parent->cell.x && from->cell.y != from->parent->cell.y) {
         distAdd = 1.4;
     }
@@ -112,10 +114,14 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
 
     Node* curNode = goal_node;
 
-    do {
+    while (true){
         path.push_back(curNode);
-        curNode = curNode->parent;
-    } while (curNode != start_node);
+        if (curNode == start_node) {
+            break;
+        } else {
+            curNode = curNode->parent;
+        }
+    }
 
     return path;
 }
@@ -129,13 +135,13 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
     mbot_lcm_msgs::pose_xyt_t curPose;
     Point<double> curPoint;
     Point<double> parentPoint;
-    for (auto& node : nodes) {
-        curPoint = grid_position_to_global_position(Point<double>(node->cell.x, node->cell.y), distances);
+    for (int i = 0; i < nodes.size(); i++) {
+        curPoint = grid_position_to_global_position(Point<double>(nodes[i]->cell.x, nodes[i]->cell.y), distances);
         curPose.x = curPoint.x;
         curPose.y = curPoint.y;
 
-        if (node-> parent != NULL) {
-            parentPoint = grid_position_to_global_position(Point<double>(node->parent->cell.x, node->parent->cell.y), distances);
+        if (i < nodes.size()-1) {
+            parentPoint = grid_position_to_global_position(Point<double>(nodes[i]->parent->cell.x, nodes[i]->parent->cell.y), distances);
             curPose.theta = atan2(parentPoint.y-curPoint.y, parentPoint.x-curPoint.x);
         } else {
             curPose.theta = 0;
@@ -143,6 +149,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 
         path.push_back(curPose);
     }
+    
     return path;
 }
 
@@ -166,6 +173,11 @@ Node* get_from_list(Node* node, std::vector<Node*> list)
 
 bool is_collision(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params) {
     bool collision;
-    collision = distances(node->cell.x, node->cell.y) < params.minDistanceToObstacle && distances(node->cell.x, node->cell.y) < params.maxDistanceWithCost;
+    if (distances.isCellInGrid(node->cell.x, node->cell.y)) {
+        collision = (distances(node->cell.x, node->cell.y) < params.minDistanceToObstacle && distances(node->cell.x, node->cell.y) < params.maxDistanceWithCost);
+    } else {
+        collision = true;
+    }
+    std::cout << "collision: " << collision << std::endl;
     return collision;
 }
