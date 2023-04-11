@@ -63,28 +63,26 @@ private:
     double min_theta_;
 
     mbot_lcm_msgs::pose_xyt_t previousPose_;
+    mbot_lcm_msgs::pose_xyt_t previousOdometry_;
     double dx_;
     double dy_;
     double dtheta_;
     uint64_t utime_;
 
-    double ds_; 
-    double alpha_;
-
     bool initialized_;
 
     std::mt19937 numberGenerator_;
-    
-    float xStd_;
-    float yStd_;
-    float thetaStd_;
 
-        // Variables to track how much the robot has moved while following the trajectory
+    float e1_;
+    float e2_;
+    float e3_;
+
     double rot1_;
     double trans_;
     double rot2_;
 
-    // Standard deviation associated with the motion of the robot
+    bool moved_;
+
     double rot1Std_;
     double transStd_;
     double rot2Std_;

@@ -25,13 +25,12 @@ void Mapping::updateMap(const mbot_lcm_msgs::lidar_t& scan,
         scoreRay(ray, map);
     }
 
-
 }
 
 void Mapping::scoreEndpoint(const adjusted_ray_t& ray, OccupancyGrid& map)
 {
 //////////////// TODO: Implement your endpoint score ///////////////////////
-    // Get global positions 
+
     Point<float> f_end = global_position_to_grid_position(
         Point<float>(
             ray.origin.x + ray.range * std::cos(ray.theta),
@@ -45,18 +44,16 @@ void Mapping::scoreEndpoint(const adjusted_ray_t& ray, OccupancyGrid& map)
     Point<int> end_cell;
     end_cell.x = static_cast<int>(f_end.x);
     end_cell.y = static_cast<int>(f_end.y);
-    // Get current odd at end point
     float value = map.logOdds(end_cell.x, end_cell.y);
-    // prevent overflow and update end point odd
     if (value <= (127 - kHitOdds_)) {
-        map.setLogOdds(end_cell.x, end_cell.y, value + kHitOdds_);
+        map.setLogOdds(end_cell.x, end_cell.y, value+kHitOdds_);
     }
-
+    
 }
 
 void Mapping::scoreRay(const adjusted_ray_t& ray, OccupancyGrid& map)
 {
-//////////////// TODO: Implement your ray score ///////////////////////
+    //////////////// TODO: Implement your ray score ///////////////////////
     std::vector<Point<int>> cells_touched = bresenham(ray, map);
     float value;
     for (Point<int> point : cells_touched) {
@@ -65,7 +62,6 @@ void Mapping::scoreRay(const adjusted_ray_t& ray, OccupancyGrid& map)
             map.setLogOdds(point.x, point.y, value-kMissOdds_);
         }
     }
-
 
 }
 
@@ -90,7 +86,7 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
     end_cell.y = static_cast<int>(f_end.y);
     std::vector<Point<int>> cells_touched;
     //////////////// TODO: Implement Bresenham's Algorithm ////////////////
-    
+
     int x0 = start_cell.x;
     int y0 = start_cell.y;
     int x1 = end_cell.x;
@@ -112,16 +108,13 @@ std::vector<Point<int>> Mapping::bresenham(const adjusted_ray_t& ray, const Occu
         if (e2 >= -dy) {
             err -= dy;
             x += sx;
-
         }
 
         if (e2 <= dx) {
             err += dx;
             y += sy;
-
         }
     }
-
 
     return cells_touched;
 }

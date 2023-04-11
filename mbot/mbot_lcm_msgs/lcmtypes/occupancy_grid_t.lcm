@@ -14,4 +14,7 @@ struct occupancy_grid_t
 
     // This should be the last element so it's easy to grab as bytes.
     int8_t cells[num_cells];
+
+    int32_t slam_mode;
+    string slam_map_location;
 }

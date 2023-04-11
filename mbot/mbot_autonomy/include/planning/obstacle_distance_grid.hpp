@@ -110,13 +110,15 @@ private:
     float& distance(int x, int y) { return cells_[cellIndex(x, y)]; }
 
     void initializeDistances(const OccupancyGrid& map);
-};
 
-void enqueue_obstacle_cells(const OccupancyGrid& map, 
+    void enqueue_obstacle_cells(const OccupancyGrid& map, 
                                 ObstacleDistanceGrid& grid, 
                                 std::priority_queue<DistanceNode>& search_queue);
 
 void expand_node(const DistanceNode& node, ObstacleDistanceGrid& grid, std::priority_queue<DistanceNode>& search_queue);
+
+};
+
 
 bool is_cell_free(cell_t cell, const OccupancyGrid& map);
 bool is_cell_occupied(cell_t cell, const OccupancyGrid& map);
