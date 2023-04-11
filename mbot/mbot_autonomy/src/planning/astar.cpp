@@ -63,19 +63,27 @@ double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
 {
     // TODO: Return calculated h cost
     double h_cost = 0;
+    double dx = std::fabs(from->cell.x - goal->cell.x);
+    double dy = std::fabs(from->cell.y - goal->cell.y);
+    h_cost = (dx+dy)+(1.414-2.0)*std::min(dx,dy);
+
+    
     return h_cost;
 }
 double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return calculated g cost
     double g_cost = 0;   
+    g_cost = pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
+    g_cost += from->parent->g_cost() + 
+
     return g_cost;
 }
 
 std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return children of a given node that are not obstacles
-    std::vector<Node*> children;
+    std::vector<Node*> neighbors;
     Node* neighbor;
     const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1, 1, 1, -1, 0};
@@ -87,18 +95,12 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
         neighbor->cell.y = node->cell.y + yDeltas[i];
         neighbor->parent = node;
         if (!is_collision(neighbor, distances, params)) {
-                if (xDeltas[i] != 0 && yDeltas[i] != 0) {
-                    distAdd = 1.4;
-                } else {
-                    distAdd = 1;
-                }
-                DistanceNode adjacentNode(adjacentCell, node.distance + distAdd);
-                grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
-                search_queue.push(adjacentNode);
+                neighbors.push_back(neighbor);
         }
     }
 
-    return children;
+    return neighbors;
+
 }
 
 std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
