@@ -111,7 +111,7 @@ void ObstacleDistanceGrid::expand_node(const DistanceNode& node, ObstacleDistanc
             if (grid(adjacentCell.x, adjacentCell.y) == -1) {
 
                 if (xDeltas[i] != 0 && yDeltas[i] != 0) {
-                    distAdd = 1.4;
+                    distAdd = 1;
                 } else {
                     distAdd = 1;
                 }
@@ -120,7 +120,6 @@ void ObstacleDistanceGrid::expand_node(const DistanceNode& node, ObstacleDistanc
                 search_queue.push(adjacentNode);
             }
         }
-
     }
 }
 
