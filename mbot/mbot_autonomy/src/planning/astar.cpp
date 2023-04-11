@@ -15,9 +15,12 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 
     mbot_lcm_msgs::robot_path_t path;
     std::vector<Node*> neighbors;
+    std::vector<Node*> nodePath;
     PriorityQueue Q;
+    Node* startNode;
     Node* goalNode;
     Node* curNode;
+    bool iterate;
 
     goalNode->cell = goalCell;
 
@@ -25,14 +28,18 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     path.path.push_back(start);
     path.path_length = path.path.size();
 
-    curNode->cell = startCell;
-    curNode->h_cost = 0;
-    curNode->g_cost = 0;
-    curNode->parent = NULL;
+    startNode->cell = startCell;
+    startNode->h_cost = 0;
+    startNode->g_cost = 0;
+    startNode->parent = NULL;
 
-    Q.push(curNode);
+    Q.push(startNode);
 
-    while (curNode != goalNode) { // if curNode == goalNode -> break
+    curNode = startNode;
+
+    iterate = true;
+
+    while (iterate) { // if curNode == goalNode -> break
         curNode = Q.pop();
         neighbors = expand_node(curNode, distances, params);
         for (auto& neighbor : neighbors) {
@@ -40,11 +47,14 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                 neighbor->g_cost = g_cost(neighbor, goalNode, distances, params);
                 neighbor->h_cost = h_cost(neighbor, goalNode, distances);
                 Q.push(neighbor);
+                if (neighbor == goalNode) {
+                    iterate = false;
+                }
             }
         }
     }
 
-    // add start node to queue, expand it to get neighbors, get their g/h cost, choose lowest cost to expand next
+    nodePath = extract_node_path(goalNode, startNode);
     
     return path;
 }
@@ -64,8 +74,14 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
 {
     // TODO: Return calculated g cost
     double g_cost = 0;   
+    double distAdd = 1;
+    if (from->cell.x != from->parent->cell.x && from->cell.y != from->parent->cell.y) {
+        distAdd = 1.4;
+    }
     g_cost = pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
-    g_cost += pow(params.maxDistanceWithCost - distances(from->parent->cell.x, from->parent->cell.y), params.distanceCostExponent);
+    g_cost += from->parent->g_cost;
+    g_cost += distAdd;
+    
     return g_cost;
 }
 
@@ -76,8 +92,6 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
     Node* neighbor;
     const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1, 1, 1, -1, 0};
-
-    double distAdd;
 
     for (int i = 0; i < 8; i++) {
         neighbor->cell.x = node->cell.x + xDeltas[i];
@@ -95,6 +109,14 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
 {
     // TODO: Generate path by following parent nodes
     std::vector<Node*> path;
+
+    Node* curNode = goal_node;
+
+    do {
+        path.push_back(curNode);
+        curNode = curNode->parent;
+    } while (curNode != start_node);
+
     return path;
 }
 
@@ -103,6 +125,24 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 {
     // TODO: prune the path to generate sparse waypoints
     std::vector<mbot_lcm_msgs::pose_xyt_t> path;
+    std::reverse(nodes.begin(), nodes.end());
+    mbot_lcm_msgs::pose_xyt_t curPose;
+    Point<double> curPoint;
+    Point<double> parentPoint;
+    for (auto& node : nodes) {
+        curPoint = grid_position_to_global_position(Point<double>(node->cell.x, node->cell.y), distances);
+        curPose.x = curPoint.x;
+        curPose.y = curPoint.y;
+
+        if (node-> parent != NULL) {
+            parentPoint = grid_position_to_global_position(Point<double>(node->parent->cell.x, node->parent->cell.y), distances);
+            curPose.theta = atan2(parentPoint.y-curPoint.y, parentPoint.x-curPoint.x);
+        } else {
+            curPose.theta = 0;
+        }
+
+        path.push_back(curPose);
+    }
     return path;
 }
 
