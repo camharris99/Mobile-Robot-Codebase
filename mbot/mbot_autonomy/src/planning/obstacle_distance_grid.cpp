@@ -120,7 +120,6 @@ void ObstacleDistanceGrid::expand_node(const DistanceNode& node, ObstacleDistanc
                 search_queue.push(adjacentNode);
             }
         }
-
     }
 }
 
