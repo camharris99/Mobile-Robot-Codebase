@@ -10,12 +10,16 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                                              const SearchParams& params)
 {
     cell_t goalCell = global_position_to_grid_cell(Point<double>(goal.x, goal.y), distances);
-     ////////////////// TODO: Implement your A* search here //////////////////////////
-    mbot_lcm_msgs::robot_path_t path;
     cell_t startCell = global_position_to_grid_cell(Point<double>(start.x, start.y), distances);
-    PriorityQueue Q;
-    Node* curNode;
+    ////////////////// TODO: Implement your A* search here //////////////////////////
+
+    mbot_lcm_msgs::robot_path_t path;
     std::vector<Node*> neighbors;
+    PriorityQueue Q;
+    Node* goalNode;
+    Node* curNode;
+
+    goalNode->cell = goalCell;
 
     path.utime = start.utime;    
     path.path.push_back(start);
@@ -28,31 +32,19 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 
     Q.push(curNode);
 
-    while (true) { // if curNode == goalNode -> break
+    while (curNode != goalNode) { // if curNode == goalNode -> break
         curNode = Q.pop();
         neighbors = expand_node(curNode, distances, params);
         for (auto& neighbor : neighbors) {
             if (!is_in_list(neighbor, Q.elements)) {
+                neighbor->g_cost = g_cost(neighbor, goalNode, distances, params);
+                neighbor->h_cost = h_cost(neighbor, goalNode, distances);
                 Q.push(neighbor);
             }
         }
     }
 
     // add start node to queue, expand it to get neighbors, get their g/h cost, choose lowest cost to expand next
-    
-    // open.push(start)
-    // closed.push(0) -- (empty)
-    // while (open != 0)
-    //      sort(open)
-    //      n = open.pop()
-    //      kids.expand(n)
-    //      for each "kid" in kids
-    //          kid.fscore = n.gscore + 1 + hscore(kid)
-    //          if kid == goal
-    //              return makePath(kid)
-    //          if kid is not in closed
-    //              open.push(kid)
-    //      closed.push(n)
     
     return path;
 }
@@ -63,19 +55,24 @@ double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
 {
     // TODO: Return calculated h cost
     double h_cost = 0;
+    double dx = std::fabs(from->cell.x - goal->cell.x);
+    double dy = std::fabs(from->cell.y - goal->cell.y);
+    h_cost = (dx+dy)+(1.414-2.0)*std::min(dx,dy);
     return h_cost;
 }
 double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return calculated g cost
     double g_cost = 0;   
+    g_cost = pow(params.maxDistanceWithCost - distances(from->cell.x, from->cell.y), params.distanceCostExponent);
+    g_cost += pow(params.maxDistanceWithCost - distances(from->parent->cell.x, from->parent->cell.y), params.distanceCostExponent);
     return g_cost;
 }
 
 std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return children of a given node that are not obstacles
-    std::vector<Node*> children;
+    std::vector<Node*> neighbors;
     Node* neighbor;
     const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1, 1, 1, -1, 0};
@@ -87,18 +84,11 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
         neighbor->cell.y = node->cell.y + yDeltas[i];
         neighbor->parent = node;
         if (!is_collision(neighbor, distances, params)) {
-                if (xDeltas[i] != 0 && yDeltas[i] != 0) {
-                    distAdd = 1.4;
-                } else {
-                    distAdd = 1;
-                }
-                DistanceNode adjacentNode(adjacentCell, node.distance + distAdd);
-                grid(adjacentCell.x, adjacentCell.y) = adjacentNode.distance * grid.metersPerCell();
-                search_queue.push(adjacentNode);
+                neighbors.push_back(neighbor);
         }
     }
 
-    return children;
+    return neighbors;
 }
 
 std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
@@ -136,6 +126,6 @@ Node* get_from_list(Node* node, std::vector<Node*> list)
 
 bool is_collision(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params) {
     bool collision;
-    collision = distances(node->cell.x, node->cell.y) < params.minDistanceToObstacle;
+    collision = distances(node->cell.x, node->cell.y) < params.minDistanceToObstacle && distances(node->cell.x, node->cell.y) < params.maxDistanceWithCost;
     return collision;
 }
