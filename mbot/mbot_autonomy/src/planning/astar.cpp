@@ -14,47 +14,55 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     ////////////////// TODO: Implement your A* search here //////////////////////////
 
     mbot_lcm_msgs::robot_path_t path;
-    std::vector<Node*> neighbors;
+    std::vector<Node*> neighborNodes;
     std::vector<Node*> nodePath;
-    PriorityQueue Q;
-    Node* startNode;
-    Node* goalNode;
-    Node* curNode;
+    PriorityQueue nodeQueue;
+    std::vector<Node*> visited;
+    Node* startNode = new Node(startCell.x, startCell.y);
+    Node* goalNode = new Node(goalCell.x, goalCell.y);
+    Node* curNode = new Node(startCell.x, startCell.y);
     bool iterate = true;
-    std::cout << "iterate: " << iterate << std::endl;
-
 
     goalNode->cell = goalCell;
-
-    path.utime = start.utime;    
-    path.path.push_back(start);
-    path.path_length = path.path.size();
+    // std::cout << "a: " << startNode->cell.x << std::endl;
 
     startNode->cell = startCell;
-    startNode->h_cost = 0.0;
-    startNode->g_cost = 0.0;
-    startNode->parent = NULL;
+    // std::cout << "start node: " << startNode->cell.x << ", " << startNode->cell.y << std::endl;
 
-    Q.push(startNode);
+    nodeQueue.push(startNode);
+    // std::cout << "d" << std::endl;
 
-    curNode = startNode;
+    // curNode = startNode;
 
-    while (iterate) { // if curNode == goalNode -> break
-        curNode = Q.pop();
-        neighbors = expand_node(curNode, distances, params);
-        for (auto& neighbor : neighbors) {
-            if (!is_in_list(neighbor, Q.elements)) {
-                neighbor->g_cost = g_cost(neighbor, goalNode, distances, params);
-                neighbor->h_cost = h_cost(neighbor, goalNode, distances);
-                std::cout << "h_cost: " << neighbor->h_cost << std::endl;
-                Q.push(neighbor);
-                if (neighbor == goalNode) {
-                    goalNode = neighbor;
+    while (iterate && !nodeQueue.empty()) { // if curNode == goalNode -> break
+        // std::cout << "iterating" << std::endl;
+        curNode = nodeQueue.pop();
+        visited.push_back(curNode);
+        // std::cout << "curNode: " << curNode->cell.x << ", " << curNode->cell.y << std::endl;
+        neighborNodes = expand_node(curNode, distances, params);
+        // for (int i = 0; i < neighborNodes.size(); i++) {
+        //     std::cout << neighborNodes[i]->cell.x << ", " << neighborNodes[i]->cell.y << std::endl;
+        // }
+        // std::cout << "neighbors: " << neighborNodes.size() << std::endl;
+        for (int i = 0; i < neighborNodes.size(); i++) {
+            // std::cout << "neighbor: " << neighbor->cell.x << std::endl;
+            if (!is_in_list(neighborNodes[i], visited)) {
+                // std::cout << "in if" << std::endl;
+                (*neighborNodes[i]).g_cost = g_cost(neighborNodes[i], goalNode, distances, params);
+                (*neighborNodes[i]).h_cost = h_cost(neighborNodes[i], goalNode, distances);
+                // std::cout << "h_cost: " << neighborNodes[i]->cell.x << ", " << neighborNodes[i]->cell.y << std::endl;
+                nodeQueue.push(neighborNodes[i]);
+                // std::cout << "Q size: " << nodeQueue.Q.size() << std::endl;
+                if (neighborNodes[i] == goalNode) {
+                    goalNode = neighborNodes[i];
                     iterate = false;
                 }
+                // std::cout << "curNode: " << curNode->cell.x << ", " << curNode->cell.y << std::endl;
             }
         }
     }
+
+    std::cout << "extracting path" << std::endl;
 
     nodePath = extract_node_path(goalNode, startNode);
     
@@ -91,16 +99,14 @@ std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances
 {
     // TODO: Return children of a given node that are not obstacles
     std::vector<Node*> neighbors;
-    Node* neighbor;
     const int xDeltas[8] = {1, 1, 1, 0, 0, -1, -1, -1};
     const int yDeltas[8] = {0, 1, -1, -1, 1, 1, -1, 0};
 
     for (int i = 0; i < 8; i++) {
-        neighbor->cell.x = node->cell.x + xDeltas[i];
-        neighbor->cell.y = node->cell.y + yDeltas[i];
+        Node* neighbor = new Node(node->cell.x + xDeltas[i], node->cell.y + yDeltas[i]);
         neighbor->parent = node;
         if (!is_collision(neighbor, distances, params)) {
-                neighbors.push_back(neighbor);
+            neighbors.push_back(neighbor);
         }
     }
 
@@ -178,6 +184,6 @@ bool is_collision(Node* node, const ObstacleDistanceGrid& distances, const Searc
     } else {
         collision = true;
     }
-    std::cout << "collision: " << collision << std::endl;
+    // std::cout << "collision: " << collision << std::endl;
     return collision;
 }

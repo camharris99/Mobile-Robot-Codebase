@@ -68,6 +68,7 @@ struct PriorityQueue
     Node* pop()
     {
         Node* n = Q.top();
+        // std::cout << n->cell.x << std::endl;
         Q.pop();
         int idx = -1;
         // Remove the node from the elements vector
