@@ -53,7 +53,7 @@ bool MotionPlanner::isValidGoal(const mbot_lcm_msgs::pose_xyt_t& goal) const
 {
     float dx = goal.x - prev_goal.x, dy = goal.y - prev_goal.y;
     float distanceFromPrev = std::sqrt(dx * dx + dy * dy);
-    
+
     //if there's more than 1 frontier, don't go to a target that is within a robot diameter of the current pose
     // if(num_frontiers != 1 && distanceFromPrev < 2 * searchParams_.minDistanceToObstacle) return false;
 

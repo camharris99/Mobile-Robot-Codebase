@@ -20,7 +20,7 @@ void ObstacleDistanceGrid::initializeDistances(const OccupancyGrid& map)
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             if (map.logOdds(x,y) < 0.0) {
-                distance(x,y) = -1;
+                distance(x,y) = INT32_MAX;
             } else {
                 distance(x,y) = 0;
             }
@@ -43,7 +43,7 @@ void ObstacleDistanceGrid::setDistances(const OccupancyGrid& map)
 
     while (!(searchQueue.empty()))
     {
-        auto nextNode = searchQueue.top();
+        DistanceNode nextNode = searchQueue.top();
         searchQueue.pop();
         expand_node(nextNode, *this, searchQueue);
     }
@@ -88,13 +88,13 @@ void ObstacleDistanceGrid::enqueue_obstacle_cells(const OccupancyGrid& map,
 
     for (cell.y = 0; cell.y < height; cell.y++) {
         for (cell.x = 0; cell.x < width; cell.x++) {
+            // std::cout << "cell distance: " << distance(cell.x, cell.y) << std::endl;
+
             if (distance(cell.x, cell.y) == 0) {
                 expand_node(DistanceNode(cell, 0.0), grid, search_queue);
             }
         }
     }
-
-
     return;
 }
 
@@ -107,11 +107,11 @@ void ObstacleDistanceGrid::expand_node(const DistanceNode& node, ObstacleDistanc
 
     for (int i = 0; i < 8; i++) {
         cell_t adjacentCell(node.cell.x + xDeltas[i], node.cell.y + yDeltas[i]);
+        // std::cout << "adjacent cell in grid: " << grid.isCellInGrid(adjacentCell.x, adjacentCell.y) << std::endl;
         if (grid.isCellInGrid(adjacentCell.x, adjacentCell.y)) {
-            if (grid(adjacentCell.x, adjacentCell.y) == -1) {
-
+            if (grid(adjacentCell.x, adjacentCell.y) == INT32_MAX) {
                 if (xDeltas[i] != 0 && yDeltas[i] != 0) {
-                    distAdd = 1;
+                    distAdd = 1.4;
                 } else {
                     distAdd = 1;
                 }
