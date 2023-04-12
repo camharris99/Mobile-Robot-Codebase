@@ -24,68 +24,41 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     bool iterate = true;
     bool goalFound = false;
     goalNode->cell = goalCell;
-    // std::cout << "a: " << startNode->cell.x << std::endl;
 
     startNode->cell = startCell;
-    // std::cout << "start node: " << startNode->cell.x << ", " << startNode->cell.y << std::endl;
 
     nodeQueue.push(startNode);
-    // std::cout << "d" << std::endl;
 
-    // curNode = startNode;
-
-    while (iterate && !nodeQueue.empty()) { // if curNode == goalNode -> break
-        // std::cout << "iterating" << std::endl;
+    while (iterate && !nodeQueue.empty()) {
         curNode = nodeQueue.pop();
         visited.push_back(curNode);
-        // std::cout << "curNode: " << curNode->cell.x << ", " << curNode->cell.y << std::endl;
+
         neighborNodes = expand_node(curNode, distances, params);
-        if (neighborNodes.size() == 0) {
-            iterate = false;
-        }
+
         for (int i = 0; i < neighborNodes.size(); i++) {
-            std::cout << neighborNodes[i]->cell.x << ", " << neighborNodes[i]->cell.y << std::endl;
-        }
-        std::cout << "visited: " << nodeQueue.Q.size() << std::endl;
-        for (int i = 0; i < neighborNodes.size(); i++) {
-            // std::cout << "neighbor: " << neighbor->cell.x << std::endl;
-            if (!is_in_list(neighborNodes[i], visited) && !nodeQueue.is_member(neighborNodes[i])) {
+
+            if (!is_in_list(neighborNodes[i], visited) && !is_in_list(neighborNodes[i], nodeQueue.elements)) {
                 (*neighborNodes[i]).g_cost = g_cost(neighborNodes[i], goalNode, distances, params);
                 (*neighborNodes[i]).h_cost = h_cost(neighborNodes[i], goalNode, distances);
-                // std::cout << "h_cost: " << neighborNodes[i]->cell.x << ", " << neighborNodes[i]->cell.y << std::endl;
+                
                 nodeQueue.push(neighborNodes[i]);
-                // std::cout << "Q size: " << nodeQueue.Q.size() << std::endl;
+
                 if (neighborNodes[i]->cell.x == goalNode->cell.x && neighborNodes[i]->cell.y == goalNode->cell.y) {
                     goalNode = neighborNodes[i];
                     goalFound = true;
                     iterate = false;
+                    break;
                 }
-
-                // while (neighborNodes[i]->cell.x == 250 && neighborNodes[i]->cell.y == 150) {
-                //     std::cout << "goal found!" << std::endl;
-                // }
-                // std::cout << "curNode: " << curNode->cell.x << ", " << curNode->cell.y << std::endl;
-            } else {
-                std::cout << "already in list!" << std::endl;
             }
         }
     }
     
     if (goalFound) {
-        // std::cout << "extracting path" << std::endl;
-
         nodePath = extract_node_path(goalNode, startNode);
-
-        // std::cout << "node path found" << std::endl;
 
         robotPath.path_length = nodePath.size();
 
-        // std::cout << "length set" << std::endl;
-
         robotPath.path = extract_pose_path(nodePath, distances);
-
-        // std::cout << "extracted pose path" << std::endl;
-        // std::cout << std::endl;
     }
     
     return robotPath;
@@ -147,11 +120,9 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
 
     while (true){
         path.push_back(curNode);
-        // std::cout << curNode->cell.x << ", " << curNode->cell.y << std::endl;
-        if (curNode == start_node) {
+        if (curNode->cell.x == start_node->cell.x && curNode->cell.y == start_node->cell.y) {
             break;
         } else {
-            // std::cout <<"attempt" << std::endl;
             curNode = curNode->parent;
         }
     }
@@ -172,10 +143,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
         curPose.x = curPoint.x;
         curPose.y = curPoint.y;
 
-        // std::cout<<curPose.x << ", " << curPose.y <<std::endl;
-
         if (i < nodes.size()-1 && i != 0) {
-            // std::cout<<nodes[i-1]->cell.x << ", " << nodes[i-1]->cell.y<<std::endl;
             parentPoint = grid_position_to_global_position(Point<double>(nodes[i-1]->cell.x, nodes[i-1]->cell.y), distances);
             curPose.theta = atan2(parentPoint.y-curPoint.y, parentPoint.x-curPoint.x);
         } else {
@@ -209,11 +177,21 @@ Node* get_from_list(Node* node, std::vector<Node*> list)
 
 bool is_collision(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params) {
     bool collision;
+    int factor = 1;
     if (distances.isCellInGrid(node->cell.x, node->cell.y)) {
-        collision = (distances(node->cell.x, node->cell.y) > params.minDistanceToObstacle && distances(node->cell.x, node->cell.y) < params.maxDistanceWithCost);
+        for (int i = 2; i < 10; i++) {
+            if (distances(node->cell.x, node->cell.y) > factor*params.maxDistanceWithCost) {
+                factor = i;
+            } else {
+                break;
+            }
+        }
+        
+        collision = !(distances(node->cell.x, node->cell.y) > params.minDistanceToObstacle && 
+                    ((distances(node->cell.x, node->cell.y) < factor*params.maxDistanceWithCost) || distances(node->cell.x, node->cell.y) == INT32_MAX));
     } else {
         collision = true;
     }
-    // std::cout << "collision: " << collision << std::endl;
+
     return collision;
 }
