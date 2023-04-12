@@ -63,8 +63,8 @@ bool MotionPlanner::isValidGoal(const mbot_lcm_msgs::pose_xyt_t& goal) const
 
     auto goalCell = global_position_to_grid_cell(Point<double>(goal.x, goal.y), distances_);
 
-    std::cout << "goalCell, x: " << goalCell.x << std::endl;
-    std::cout << "goalCell, y: " << goalCell.y << std::endl;
+    // std::cout << "goalCell, x: " << goalCell.x << std::endl;
+    // std::cout << "goalCell, y: " << goalCell.y << std::endl;
     // std::cout << "goal test, dist: " << distanceFromPrev << std::endl;
 
     // A valid goal is in the grid
@@ -73,8 +73,8 @@ bool MotionPlanner::isValidGoal(const mbot_lcm_msgs::pose_xyt_t& goal) const
         // And is far enough from obstacles that the robot can physically occupy the space
         // Add an extra cell to account for discretization error and make motion a little safer by not trying to
         // completely snuggle up against the walls in the motion plan
-        std::cout << "distances: " << distances_(goalCell.x, goalCell.y) << std::endl;
-        std::cout << "robot radius: " << params_.robotRadius << std::endl;
+        // std::cout << "distances: " << distances_(goalCell.x, goalCell.y) << std::endl;
+        // std::cout << "robot radius: " << params_.robotRadius << std::endl;
         return distances_(goalCell.x, goalCell.y) > params_.robotRadius;
     }
     
