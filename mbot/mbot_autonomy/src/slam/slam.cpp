@@ -306,6 +306,9 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
 
 void OccupancyGridSLAM::updateLocalization(void)
 {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
 
     if(haveMap_ && (mode_ != mapping_only))
     {
@@ -315,7 +318,15 @@ void OccupancyGridSLAM::updateLocalization(void)
             currentPose_  = filter_.updateFilterActionOnly(currentOdometry_);
         }
         else{
+            // time
+            auto start = clock::now();
+
             currentPose_  = filter_.updateFilter(currentOdometry_, currentScan_, map_);
+
+            auto end = clock::now();
+            std::cout << duration_cast<nanoseconds>(end-start).count() << "\n";
+
+            // time again
         }
 
         auto particles = filter_.particles();

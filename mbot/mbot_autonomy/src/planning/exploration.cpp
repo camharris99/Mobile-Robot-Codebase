@@ -263,8 +263,16 @@ int8_t Exploration::executeExploringMap(bool initialize)
     *           explored more of the map.
     *       -- You will likely be able to see the frontier before actually reaching the end of the path leading to it.
     */
-    frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+
+   //   using your currentPath_'s size (remaining waypoints) and proxoimity to your currentPath_'s final point,
+   // either skip over or reassign the currentPath_. if you reassign currentPath_, do so by using the front_processing.path_selected.
+
+
     frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+    frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+    std::cout << "num found frontiers: " << frontiers_.size() << std::endl;
+    currentPath_ = front_processing.path_selected;
+
     
     /////////////////////////////// End student code ///////////////////////////////
     
@@ -321,12 +329,16 @@ int8_t Exploration::executeReturningHome(bool initialize)
     //////////////////////// TODO: Implement your method for returning to the home pose ///////////////////////////
     /*
     * NOTES:
-    *   - At the end of each iteration, then (1) or (2) must hold, otherwise exploration is considered to have failed:
+    *   - At the end of each iteratioTn, then (1) or (2) must hold, otherwise exploration is considered to have failed:
     *       (1) dist(currentPose_, targetPose_) < kReachedPositionThreshold  :  reached the home pose
     *       (2) currentPath_.path_length > 1  :  currently following a path to the home pose
     */
     
     printf("Returning home\n");
+    mbot_lcm_msgs::robot_path_t temp_path = planner_.planPath(currentPose_, homePose_);
+    if (temp_path.path_length > 1) {
+        currentPath_ = temp_path;
+    }
 
     /////////////////////////////// End student code ///////////////////////////////
     

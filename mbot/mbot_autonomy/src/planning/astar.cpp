@@ -57,6 +57,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
         nodePath = extract_node_path(goalNode, startNode);
 
         robotPath.path_length = nodePath.size();
+        robotPath.utime = start.utime;
 
         robotPath.path = extract_pose_path(nodePath, distances);
     }
