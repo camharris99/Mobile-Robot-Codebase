@@ -19,10 +19,18 @@ mbot_lcm_msgs::pose_xyt_t nearest_navigable_cell(mbot_lcm_msgs::pose_xyt_t pose,
                                                   Point<float> desiredPosition,
                                                   const OccupancyGrid& map,
                                                   const MotionPlanner& planner);
+
 mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> position,
                                                         const OccupancyGrid& map,
                                                         const MotionPlanner& planner);
-double path_length(const mbot_lcm_msgs::robot_path_t& path);
+
+double path_length(const mbot_lcm_msgs::robot_path_t& path){
+    double pathlength = 0.;
+    for (int i = 0; i < path.path_length-1; i+=1){
+        pathlength += (path.path[i].x - path.path[i+1].x) * (path.path[i].x - path.path[i+1].x) + (path.path[i].y - path.path[i+1].y) * (path.path[i].y - path.path[i+1].y);
+    }
+    return pathlength;
+};
 
 
 std::vector<frontier_t> find_map_frontiers(const OccupancyGrid& map, 
@@ -126,10 +134,33 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
     // Returnable path
     mbot_lcm_msgs::robot_path_t path;
     path.utime = utime_now();
-    path.path_length = 1;
-    path.path.push_back(robotPose);
+    //path.path_length = 1;
+    //path.path.push_back(robotPose);
     int unreachable_frontiers = 0;
 
+    float mindistance = -1.0;
+    float distance;
+
+    Point<double> f_centroid;
+    mbot_lcm_msgs::pose_xyt_t fpose_reachable;
+    mbot_lcm_msgs::robot_path_t temp_path;
+
+    for (auto &frontier : frontiers){
+        int i = 0;
+        f_centroid = find_frontier_centroid(frontier);
+        fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner);
+        temp_path = planner.planPath(robotPose, fpose_reachable);
+        i += 1;
+        distance = path_length(temp_path);
+        if (distance < mindistance){
+            path = temp_path;
+            mindistance = distance;
+        } 
+
+        if (i == 0){
+            unreachable_frontiers+=1;
+        }
+    }
     
     return frontier_processing_t(path, unreachable_frontiers);
 }
@@ -212,4 +243,73 @@ Point<double> find_frontier_centroid(const frontier_t& frontier)
     printf("Mid point of frontier: (%f,%f)\n", mid_point.x, mid_point.y);
 
     return mid_point;
+}
+
+mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose,
+                                                        const OccupancyGrid& map,
+                                                        const MotionPlanner& planner){
+    mbot_lcm_msgs::pose_xyt_t targetPose;
+    
+/*
+    * To find frontiers, we use a connected components search in the occupancy grid. Each connected components consists
+    * only of cells where is_frontier_cell returns true. We scan the grid until an unvisited frontier cell is
+    * encountered, then we grow that frontier until all connected cells are found. We then continue scanning through the
+    * grid. This algorithm can also perform very fast blob detection if you change is_frontier_cell to some other check
+    * based on pixel color or another condition amongst pixels.
+    */
+    // std::vector<frontier_t> frontiers;
+    std::set<Point<int>> visitedCells;
+    auto frontierCell = global_position_to_grid_cell(Point<double>(frontierPose.x, frontierPose.y), map);
+    printf("frontierCell[x,y]: %d\t%d\n", frontierCell.x,frontierCell.y);
+    
+    // Point<int> robotCell = global_position_to_grid_cell(Point<float>(robotPose.x, robotPose.y), map);
+    std::queue<Point<int>> cellQueue;
+    cellQueue.push(frontierCell);
+    visitedCells.insert(frontierCell);
+  
+    // Use a 4-way connected check for expanding through free space.
+    const int kNumNeighbors = 8;
+    const int xDeltas[] = { -1, -1, -1, 1, 1, 1, 0, 0 };
+    const int yDeltas[] = {  0,  1, -1, 0, 1,-1, 1,-1 };
+    
+    // Do a simple BFS to find all connected free space cells and thus avoid unreachable frontiers
+    while(!cellQueue.empty())
+    {
+        Point<int> nextCell = cellQueue.front();
+        cellQueue.pop();
+        
+        // Check each neighbor to see if it is also a frontier
+        for(int n = 0; n < kNumNeighbors; ++n)
+        {
+            Point<int> neighbor(nextCell.x + xDeltas[n], nextCell.y + yDeltas[n]);
+            printf("neighbor[x,y]: %d\t%d\n", neighbor.x,neighbor.y);
+            // If the cell has been visited or isn't in the map, then skip it
+            if(visitedCells.find(neighbor) != visitedCells.end() || !map.isCellInGrid(neighbor.x, neighbor.y))
+            {
+                continue;
+            }
+            // If it is a free cell, then return that free cell
+            else if(map(neighbor.x, neighbor.y) < 0)
+            {
+                Point<double> temp_point = grid_position_to_global_position(Point<int>(neighbor.x, neighbor.y), map);
+                printf("temp_point[x,y]: %d\t%d\n", temp_point.x,temp_point.y);
+                targetPose.x = (float) temp_point.x;
+                targetPose.y = (float) temp_point.y;
+                printf("targetPose[x,y]: %d\t%d\n", targetPose.x,targetPose.y);
+            }
+            // If it is a occupied cell, then keep finding
+            else if(map(neighbor.x, neighbor.y) > 0)
+            {
+                visitedCells.insert(neighbor);
+                cellQueue.push(neighbor);
+            }
+            // skip other unknown cells
+            else
+            {
+                continue;
+            }
+        }
+    }
+    //when no valid goal ?
+    return targetPose;
 }
