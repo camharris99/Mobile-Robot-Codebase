@@ -417,7 +417,7 @@ int main(int argc, char** argv)
             // Limit command values
             // Fwd vel
 
-            float max_trans = 0.5;
+            float max_trans = 0.25;
             if (cmd.trans_v > max_trans) cmd.trans_v = max_trans;
             else if (cmd.trans_v < -max_trans) cmd.trans_v = -max_trans; 
 

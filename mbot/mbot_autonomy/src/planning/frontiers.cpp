@@ -21,7 +21,8 @@ mbot_lcm_msgs::pose_xyt_t nearest_navigable_cell(mbot_lcm_msgs::pose_xyt_t pose,
                                                   const MotionPlanner& planner);
 mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> position,
                                                         const OccupancyGrid& map,
-                                                        const MotionPlanner& planner);
+                                                        const MotionPlanner& planner,
+                                                        const mbot_lcm_msgs::pose_xyt_t& robot_pose);
 double path_length(const mbot_lcm_msgs::robot_path_t& path);
 
 
@@ -139,8 +140,11 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     for (auto& frontier : frontiers) {
         f_centroid = find_frontier_centroid(frontier);
-        fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner);
+        std::cout << "searching free space" << std::endl;
+        fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner, robotPose);
+        std::cout << "free space found" << std::endl;
         temp_path = planner.planPath(robotPose, fpose_reachable);
+        std::cout << "tempPath length: " << temp_path.path_length << std::endl;
 
         if (temp_path.path_length == 1) 
         {
@@ -152,6 +156,12 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
             path = temp_path;
         }
     }
+
+    std::cout << "found min path" << std::endl;
+
+    path.path_length = path.path.size();
+
+    std::cout << "path.path_length: " << path.path_length << std::endl;
 
     return frontier_processing_t(path, unreachable_frontiers);
 }
@@ -238,8 +248,9 @@ Point<double> find_frontier_centroid(const frontier_t& frontier)
 
 mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose,
                                                         const OccupancyGrid& map,
-                                                        const MotionPlanner& planner){
-    mbot_lcm_msgs::pose_xyt_t targetPose;
+                                                        const MotionPlanner& planner,
+                                                        const mbot_lcm_msgs::pose_xyt_t& pose){
+    mbot_lcm_msgs::pose_xyt_t targetPose = {0, 0.0, 0.0, 0.0};
     
 /*
     * To find frontiers, we use a connected components search in the occupancy grid. Each connected components consists
@@ -274,6 +285,10 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
         for(int n = 0; n < kNumNeighbors; ++n)
         {
             Point<int> neighbor(nextCell.x + xDeltas[n], nextCell.y + yDeltas[n]);
+            auto curPoint = grid_position_to_global_position(Point<double>(neighbor.x, neighbor.y), map);
+            targetPose.x = curPoint.x;
+            targetPose.y = curPoint.y;
+
             // std::cout << "neigh [x,y]: " << neighbor.x << ", " << neighbor.y << std::endl;
 
             // If the cell has been visited or isn't in the map, then skip it
@@ -282,7 +297,7 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
                 // std::cout << "visited already" << std::endl;
                 continue;
             }
-            else if (!planner.isValidGoal(neighbor)) 
+            else if (planner.planPath(pose, targetPose).path_length == 1) 
             {
                 // not a valid goal, but going to push it to the lists
                 visitedCells.insert(neighbor);
@@ -293,7 +308,7 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
             {
                 // valid goal!
                 Point<double> temp_point = grid_position_to_global_position(Point<double>(neighbor.x, neighbor.y), map);
-                std::cout << "temp [x,y]: " << temp_point.x << ", " << temp_point.y << std::endl;
+                // std::cout << "temp [x,y]: " << temp_point.x << ", " << temp_point.y << std::endl;
 
                 targetPose.x = (float) temp_point.x;
                 targetPose.y = (float) temp_point.y;

@@ -9,8 +9,15 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                                              const ObstacleDistanceGrid& distances,
                                              const SearchParams& params)
 {
+    // std::cout << "start x and y: " << start.x << ", " << start.y << std::endl;
+    // std::cout << "goal x and y: " << goal.x << ", " << goal.y << std::endl;
+
     cell_t goalCell = global_position_to_grid_cell(Point<double>(goal.x, goal.y), distances);
     cell_t startCell = global_position_to_grid_cell(Point<double>(start.x, start.y), distances);
+
+    // std::cout << "start cell x and y: " << startCell.x << ", " << startCell.y << std::endl;
+    // std::cout << "goal cell x and y: " << goalCell.x << ", " << goalCell.y << std::endl;
+
     ////////////////// TODO: Implement your A* search here //////////////////////////
 
     mbot_lcm_msgs::robot_path_t robotPath;
@@ -56,10 +63,13 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     if (goalFound) {
         nodePath = extract_node_path(goalNode, startNode);
 
-        robotPath.path_length = nodePath.size();
-        robotPath.utime = start.utime;
-
         robotPath.path = extract_pose_path(nodePath, distances);
+        robotPath.path_length = robotPath.path.size();
+        robotPath.utime = start.utime;
+    } else {
+        robotPath.path.push_back(start);
+        robotPath.path_length = 1;
+        robotPath.utime = start.utime;
     }
     
     return robotPath;
@@ -136,24 +146,34 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 {
     // TODO: prune the path to generate sparse waypoints
     std::vector<mbot_lcm_msgs::pose_xyt_t> path;
-    mbot_lcm_msgs::pose_xyt_t curPose;
+    std::vector<mbot_lcm_msgs::pose_xyt_t> temp_path;
     Point<double> curPoint;
     Point<double> parentPoint;
     for (int i = 0; i < nodes.size(); i++) {
+        mbot_lcm_msgs::pose_xyt_t curPose = {0, 0.0, 0.0, 0.0};
         curPoint = grid_position_to_global_position(Point<double>(nodes[i]->cell.x, nodes[i]->cell.y), distances);
         curPose.x = curPoint.x;
         curPose.y = curPoint.y;
 
-        if (i < nodes.size()-1 && i != 0) {
+        if (i < nodes.size() - 1 && i != 0) {
             parentPoint = grid_position_to_global_position(Point<double>(nodes[i-1]->cell.x, nodes[i-1]->cell.y), distances);
             curPose.theta = atan2(parentPoint.y-curPoint.y, parentPoint.x-curPoint.x);
         } else {
             curPose.theta = 0;
         }
 
-        path.push_back(curPose);
+        temp_path.push_back(curPose);
     }
-    std::reverse(path.begin(), path.end());
+
+    path.push_back(temp_path[0]);
+
+    for (int i = 5; i < temp_path.size() - 1; i+=5) {
+        path.push_back(temp_path[i]);
+    }
+
+    path.push_back(temp_path[temp_path.size()-1]);
+
+    // std::reverse(temp_path.begin(), temp_path.end());
 
     return path;
 }

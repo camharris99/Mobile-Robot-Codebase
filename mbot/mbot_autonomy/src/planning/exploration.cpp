@@ -26,9 +26,14 @@ using pose_vec_t = std::vector<pose_t>;
 bool are_equal(const pose_vec_t& lhs, const pose_vec_t& rhs)
 {
     if(lhs.size() != rhs.size()) return false;
-    for (const auto& l: lhs)
-        for (const auto& r: rhs)
-            if (!are_equal(l, r)) return false;
+    for (int i = 0; i < lhs.size(); i++) {
+        if (!are_equal(lhs[i], rhs[i])) {
+            return false;
+        }
+    }
+    // for (const auto& l: lhs)
+    //     for (const auto& r: rhs)
+    //         if (!are_equal(l, r)) return false;
     return true;
 }
 
@@ -269,10 +274,30 @@ int8_t Exploration::executeExploringMap(bool initialize)
 
 
     frontiers_ = find_map_frontiers(currentMap_, currentPose_);
+    // std::cout << "found frontiers" << std::endl;
     frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
-    std::cout << "num found frontiers: " << frontiers_.size() << std::endl;
-    currentPath_ = front_processing.path_selected;
+    // std::cout << "frontiers processed" << std::endl;
+    // std::cout << "frontier length: " << front_processing.path_selected.path_length << std::endl;
+    // std::cout << "path length: " << currentPath_.path_length << std::endl;
 
+    // std::cout << front_processing.path_selected.path[front_processing.path_selected.path_length-1].x << std::endl;
+    // std::cout << front_processing.path_selected.path[front_processing.path_selected.path_length-1].y << std::endl;
+
+    // mbot_lcm_msgs::pose_xyt_t goalPose = front_processing.path_selected.path[front_processing.path_selected.path_length-1];
+
+    // std::cout << "num found frontiers: " << frontiers_.size() << std::endl;
+    // std::cout << "currentpath length: " << currentPath_.path_length << std::endl;
+
+    // if (currentPath_.path_length < 1) 
+    // {
+    //     currentPath_ = front_processing.path_selected;
+    //     std::cout << "set currentPath_" << std::endl;
+    // } else if (distance_between_points(Point<float>(goalPose.x, goalPose.y), 
+    //                                    Point<float>(currentPose_.x, currentPose_.y)) < kReachedPositionThreshold) {
+    //     currentPath_ = front_processing.path_selected;
+    //     std::cout << "set currentPath_ because distance was low enough" << std::endl;
+    // }
+    currentPath_ = front_processing.path_selected;
     
     /////////////////////////////// End student code ///////////////////////////////
     
