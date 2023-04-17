@@ -35,8 +35,8 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
 , randomInitialPos_(randomInitialPos)
-, odomResetThreshDist_(99999)
-, odomResetThreshAng_(99999)  // ~5 degrees.
+, odomResetThreshDist_(10.0)
+, odomResetThreshAng_(10.0)  // ~5 degrees.
 , mapFile_(mapFile)
 , initialPose_(initialPose)
 {
@@ -319,12 +319,13 @@ void OccupancyGridSLAM::updateLocalization(void)
         }
         else{
             // time
-            auto start = clock::now();
+            // auto start = clock::now();
 
             currentPose_  = filter_.updateFilter(currentOdometry_, currentScan_, map_);
+            std::cout << currentPose_.x << ", " << currentPose_.y << ", " << currentPose_.theta << ", " << currentOdometry_.x << ", " << currentOdometry_.y << ", " << currentOdometry_.theta << std::endl;
 
-            auto end = clock::now();
-            std::cout << duration_cast<nanoseconds>(end-start).count() << "\n";
+            // auto end = clock::now();
+            // std::cout << duration_cast<nanoseconds>(end-start).count() << "\n";
 
             // time again
         }

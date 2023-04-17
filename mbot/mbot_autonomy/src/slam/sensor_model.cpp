@@ -9,39 +9,6 @@ SensorModel::SensorModel(void)
 {
 }
 
-
-// double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample, 
-//                                const mbot_lcm_msgs::lidar_t& scan, 
-//                                const OccupancyGrid& map)
-// {
-//     double scanScore = 0.0;
-//     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
-//     // TODO
-
-//     for (auto& ray : movingScan) {
-//         Point<double> endPoint(ray.origin.x + ray.range * std::cos(ray.theta),
-//                                ray.origin.y + ray.range * std::sin(ray.theta));
-//         auto rayEnd = global_position_to_grid_position(endPoint, map);
-//         auto nextCell = rayEnd;
-//         nextCell.x += 1;
-//         nextCell.y += 1;
-
-//         auto prevCell = rayEnd;
-//         prevCell.x -= 1;
-//         prevCell.y -= 1;
-
-//         if (map.logOdds(rayEnd.x, rayEnd.y) > 0.0) {
-//             scanScore += map.logOdds(rayEnd.x, rayEnd.y);
-//         } else if (map.logOdds(nextCell.x, nextCell.y) > 0.0) {
-//             scanScore += 0.5*map.logOdds(nextCell.x, nextCell.y);
-//         } else if (map.logOdds(prevCell.x, prevCell.y) > 0.0) {
-//             scanScore += 0.5*map.logOdds(prevCell.x, prevCell.y);
-//         }
-//     }
-    
-//     return scanScore;
-// }
-
 double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample, const mbot_lcm_msgs::lidar_t& scan, const OccupancyGrid& map)
 {
     double scanScore = 0.0;
