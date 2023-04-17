@@ -266,6 +266,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
     
     frontiers_ = find_map_frontiers(currentMap_, currentPose_);
     frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+    
     printf("Num found frontiers: %d\n", frontiers_.size());
     if (frontiers_.size() - front_processing.num_unreachable_frontiers > 0) {
         if (front_processing.path_selected.path_length > 1) {

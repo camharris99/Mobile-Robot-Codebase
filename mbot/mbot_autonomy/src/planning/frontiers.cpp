@@ -132,37 +132,45 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
     // Initial alg: find the nearest one
 
     // Returnable path
+   // Returnable path
     mbot_lcm_msgs::robot_path_t path;
-    path.utime = utime_now();
-    //path.path_length = 1;
-    //path.path.push_back(robotPose);
-    int unreachable_frontiers = 0;
-
-    float mindistance = -1.0;
-    float distance;
-
-    Point<double> f_centroid;
+    Point<float> f_centroid;
     mbot_lcm_msgs::pose_xyt_t fpose_reachable;
     mbot_lcm_msgs::robot_path_t temp_path;
 
-    for (auto &frontier : frontiers){
-        int i = 0;
-        f_centroid = find_frontier_centroid(frontier);
-        fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner);
-        temp_path = planner.planPath(robotPose, fpose_reachable);
-        i += 1;
-        distance = path_length(temp_path);
-        if (distance < mindistance){
-            path = temp_path;
-            mindistance = distance;
-        } 
+    path.utime = utime_now();
+    path.path_length = 1;
+    path.path.push_back(robotPose);
+    int unreachable_frontiers = 0;
+    int32_t minPathLength = INT32_MAX;
 
-        if (i == 0){
-            unreachable_frontiers+=1;
+    for (auto& frontier : frontiers) {
+        f_centroid = find_frontier_centroid(frontier);
+        std::cout << "searching free space" << std::endl;
+        fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner, robotPose);
+        std::cout << "free space found" << std::endl;
+        temp_path = planner.planPath(robotPose, fpose_reachable);
+        std::cout << "tempPath length: " << temp_path.path_length << std::endl;
+
+        if (temp_path.path_length == 1) 
+        {
+            unreachable_frontiers++;
+        } 
+        else if (temp_path.path_length < minPathLength) 
+        {
+            minPathLength = temp_path.path_length;
+            path = temp_path;
         }
     }
-    
+
+    std::cout << "found min path" << std::endl;
+
+    path.path_length = path.path.size();
+
+    std::cout << "path.path_length: " << path.path_length << std::endl;
+
     return frontier_processing_t(path, unreachable_frontiers);
+
 }
 
 
@@ -247,8 +255,9 @@ Point<double> find_frontier_centroid(const frontier_t& frontier)
 
 mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose,
                                                         const OccupancyGrid& map,
-                                                        const MotionPlanner& planner){
-    mbot_lcm_msgs::pose_xyt_t targetPose;
+                                                        const MotionPlanner& planner,
+                                                        const mbot_lcm_msgs::pose_xyt_t& pose){
+    mbot_lcm_msgs::pose_xyt_t targetPose = {0, 0.0, 0.0, 0.0};
     
 /*
     * To find frontiers, we use a connected components search in the occupancy grid. Each connected components consists
@@ -266,6 +275,7 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
     std::queue<Point<int>> cellQueue;
     cellQueue.push(frontierCell);
     visitedCells.insert(frontierCell);
+    bool iterate = true;
   
     // Use a 4-way connected check for expanding through free space.
     const int kNumNeighbors = 8;
@@ -273,7 +283,7 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
     const int yDeltas[] = {  0,  1, -1, 0, 1,-1, 1,-1 };
     
     // Do a simple BFS to find all connected free space cells and thus avoid unreachable frontiers
-    while(!cellQueue.empty())
+    while(!cellQueue.empty() && iterate)
     {
         Point<int> nextCell = cellQueue.front();
         cellQueue.pop();
@@ -282,23 +292,39 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
         for(int n = 0; n < kNumNeighbors; ++n)
         {
             Point<int> neighbor(nextCell.x + xDeltas[n], nextCell.y + yDeltas[n]);
-            printf("neighbor[x,y]: %d\t%d\n", neighbor.x,neighbor.y);
+            auto curPoint = grid_position_to_global_position(Point<double>(neighbor.x, neighbor.y), map);
+            targetPose.x = curPoint.x;
+            targetPose.y = curPoint.y;
+
+            // std::cout << "neigh [x,y]: " << neighbor.x << ", " << neighbor.y << std::endl;
+
             // If the cell has been visited or isn't in the map, then skip it
-            if(visitedCells.find(neighbor) != visitedCells.end() || !map.isCellInGrid(neighbor.x, neighbor.y))
+            if(visitedCells.find(neighbor) != visitedCells.end())
             {
+                // std::cout << "visited already" << std::endl;
                 continue;
             }
-            // If it is a free cell, then return that free cell
-            else if(map(neighbor.x, neighbor.y) < 0)
+            else if (planner.planPath(pose, targetPose).path_length == 1) 
             {
-                Point<double> temp_point = grid_position_to_global_position(Point<int>(neighbor.x, neighbor.y), map);
-                printf("temp_point[x,y]: %d\t%d\n", temp_point.x,temp_point.y);
+                // not a valid goal, but going to push it to the lists
+                visitedCells.insert(neighbor);
+                cellQueue.push(neighbor);
+            }
+            // If it is a free cell, then return that free cell
+            else if(map.logOdds(neighbor.x, neighbor.y) < 0)
+            {
+                // valid goal!
+                Point<double> temp_point = grid_position_to_global_position(Point<double>(neighbor.x, neighbor.y), map);
+                std::cout << "temp [x,y]: " << temp_point.x << ", " << temp_point.y << std::endl;
+
                 targetPose.x = (float) temp_point.x;
                 targetPose.y = (float) temp_point.y;
-                printf("targetPose[x,y]: %d\t%d\n", targetPose.x,targetPose.y);
+                iterate = false;
+                break;
+                // printf("targetPose[x,y]: %f\t%f\n", targetPose.x,targetPose.y);
             }
             // If it is a occupied cell, then keep finding
-            else if(map(neighbor.x, neighbor.y) > 0)
+            else if(map.logOdds(neighbor.x, neighbor.y) > 0)
             {
                 visitedCells.insert(neighbor);
                 cellQueue.push(neighbor);
@@ -312,4 +338,5 @@ mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> frontierPose
     }
     //when no valid goal ?
     return targetPose;
+
 }

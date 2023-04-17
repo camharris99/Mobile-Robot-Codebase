@@ -78,6 +78,7 @@ double path_length(const mbot_lcm_msgs::robot_path_t& path);
 
 mbot_lcm_msgs::pose_xyt_t search_to_nearest_free_space(Point<float> position,
                                                         const OccupancyGrid& map,
-                                                        const MotionPlanner& planner);
+                                                        const MotionPlanner& planner,
+                                                        const mbot_lcm_msgs::pose_xyt_t& pose);
 
 #endif // PLANNING_FRONTIERS_HPP
