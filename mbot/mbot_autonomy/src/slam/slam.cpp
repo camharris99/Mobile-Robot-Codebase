@@ -322,7 +322,7 @@ void OccupancyGridSLAM::updateLocalization(void)
             // auto start = clock::now();
 
             currentPose_  = filter_.updateFilter(currentOdometry_, currentScan_, map_);
-            std::cout << currentPose_.x << ", " << currentPose_.y << ", " << currentPose_.theta << ", " << currentOdometry_.x << ", " << currentOdometry_.y << ", " << currentOdometry_.theta << std::endl;
+            // std::cout << currentPose_.x << ", " << currentPose_.y << ", " << currentPose_.theta << ", " << currentOdometry_.x << ", " << currentOdometry_.y << ", " << currentOdometry_.theta << std::endl;
 
             // auto end = clock::now();
             // std::cout << duration_cast<nanoseconds>(end-start).count() << "\n";
