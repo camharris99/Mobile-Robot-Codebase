@@ -568,11 +568,16 @@ void BotGui::updateGridStatusBarText(void)
     std::ostringstream out;
     out << std::fixed << std::setprecision(2) << "Global: " << mouseWorldCoord_ << " Cell: " << mouseGridCoord_
         << " Log-odds: " << static_cast<int>(map_.logOdds(mouseGridCoord_.x, mouseGridCoord_.y));
-    
+
     // For each active trace, write the current pose
     out << "    ";
     for(auto& t : traces_)
     {
+
+        // if (t.first == "SLAM_POSE") {
+        //     std::cout << t.second.trace.back().x << "," << t.second.trace.back().y << "," << t.second.trace.back().theta << "," << t.second.trace.back().utime << std::endl;
+        // }
+
         Trace& trace = t.second;
         if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(trace.checkbox)))
         {

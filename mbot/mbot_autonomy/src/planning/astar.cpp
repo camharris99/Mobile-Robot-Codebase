@@ -169,7 +169,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 
     path.push_back(temp_path[0]);
 
-    for (int i = 5; i < temp_path.size() - 1; i+=5) {
+    for (int i = 5; i < temp_path.size() - 4; i+=5) {
         path.push_back(temp_path[i]);
     }
 

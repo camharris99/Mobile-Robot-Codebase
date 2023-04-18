@@ -5,7 +5,7 @@
 #include <utils/grid_utils.hpp>
 #include <common_utils/geometric/point.hpp>
 SensorModel::SensorModel(void)
-:   ray_stride_(5)
+:   ray_stride_(3)
 {
 }
 
@@ -47,8 +47,8 @@ double SensorModel::scoreRay(const adjusted_ray_t& ray, const OccupancyGrid& map
         if (odds_prev_cell > 0.0) {
             odds_current_cell += 0.5 * odds_prev_cell;
         }
-        else if (odds_prev_cell > 0.0){
-            odds_current_cell += 0.5 * odds_prev_cell;
+        else if (odds_next_cell > 0.0){
+            odds_current_cell += 0.5 * odds_next_cell;
         }
     }
 
