@@ -140,11 +140,11 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     for (auto& frontier : frontiers) {
         f_centroid = find_frontier_centroid(frontier);
-        std::cout << "searching free space" << std::endl;
+        // std::cout << "searching free space" << std::endl;
         fpose_reachable = search_to_nearest_free_space(f_centroid, map, planner, robotPose);
-        std::cout << "free space found" << std::endl;
+        // std::cout << "free space found" << std::endl;
         temp_path = planner.planPath(robotPose, fpose_reachable);
-        std::cout << "tempPath length: " << temp_path.path_length << std::endl;
+        // std::cout << "tempPath length: " << temp_path.path_length << std::endl;
 
         if (temp_path.path_length == 1) 
         {
@@ -157,11 +157,11 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
         }
     }
 
-    std::cout << "found min path" << std::endl;
+    // std::cout << "found min path" << std::endl;
 
     path.path_length = path.path.size();
 
-    std::cout << "path.path_length: " << path.path_length << std::endl;
+    // std::cout << "path.path_length: " << path.path_length << std::endl;
 
     return frontier_processing_t(path, unreachable_frontiers);
 }

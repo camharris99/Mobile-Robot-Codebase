@@ -274,8 +274,39 @@ int8_t Exploration::executeExploringMap(bool initialize)
 
 
     frontiers_ = find_map_frontiers(currentMap_, currentPose_);
-    // std::cout << "found frontiers" << std::endl;
     frontier_processing_t front_processing = plan_path_to_frontier(frontiers_, currentPose_, currentMap_, planner_);
+    float x_diff = 0.0;
+    float y_diff = 0.0;
+    float x_thresh = 0.1;
+    float y_thresh = 0.1;
+
+    if (currentPath_.path.size() > 1) {
+        x_diff = currentPose_.x - currentPath_.path[currentPath_.path_length-1].x;
+        y_diff = currentPose_.y - currentPath_.path[currentPath_.path_length-1].y;
+        if (std::fabs(x_diff) < x_thresh && std::fabs(y_diff) < y_thresh) {
+            currentPath_ = front_processing.path_selected;
+        }
+    } else {
+        currentPath_ = front_processing.path_selected;
+    }
+
+    // if (currentPath_.path_length == 384) {
+    //     currentPath_ = front_processing.path_selected;
+    //     std::cout << "default pose changed" << std::endl;
+    // }
+
+    // if (currentPath_.path[currentPath_.path_length-1].x == front_processing.path_selected.path[front_processing.path_selected.path_length-1].x &&
+    //     currentPath_.path[currentPath_.path_length-1].y == front_processing.path_selected.path[front_processing.path_selected.path_length-1].y) {
+    //     std::cout << "paths are equal" << std::endl;
+    // } else {
+    //     currentPath_ = front_processing.path_selected;
+    //     std::cout << "path set" << std::endl;
+    // }
+
+    // for (int i = 0; i < currentPath_.path_length; i++) {
+    //     std::cout << "path at " << i << ": " << currentPath_.path[i].x << ", " << currentPath_.path[i].y << std::endl;
+    // }
+
     // std::cout << "frontiers processed" << std::endl;
     // std::cout << "frontier length: " << front_processing.path_selected.path_length << std::endl;
     // std::cout << "path length: " << currentPath_.path_length << std::endl;
@@ -297,7 +328,7 @@ int8_t Exploration::executeExploringMap(bool initialize)
     //     currentPath_ = front_processing.path_selected;
     //     std::cout << "set currentPath_ because distance was low enough" << std::endl;
     // }
-    currentPath_ = front_processing.path_selected;
+    // currentPath_ = front_processing.path_selected;
     
     /////////////////////////////// End student code ///////////////////////////////
     

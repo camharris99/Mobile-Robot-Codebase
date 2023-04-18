@@ -147,7 +147,7 @@ class SmartManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float pid[3] = {0.9, 2.6, 0.1}; //kp, ka, kb
+    float pid[3] = {0.9, 2.6, -0.0001}; //kp, ka, kb
     float d_end_crit = 0.02;
     float d_end_midsteps = 0.08;
     float angle_end_crit = 0.2;
@@ -417,7 +417,7 @@ int main(int argc, char** argv)
             // Limit command values
             // Fwd vel
 
-            float max_trans = 0.25;
+            float max_trans = 0.3;
             if (cmd.trans_v > max_trans) cmd.trans_v = max_trans;
             else if (cmd.trans_v < -max_trans) cmd.trans_v = -max_trans; 
 
