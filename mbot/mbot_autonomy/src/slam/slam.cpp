@@ -300,9 +300,13 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
         haveInitializedPoses_ = true;
 
         if (randomInitialPos_)
+        {
+            //std::cout << "initializeFilterRandomly"<< std::endl;
             filter_.initializeFilterRandomly(map_);
-        else
+        } else {
             filter_.initializeFilterAtPose(previousPose_);
+        }
+            
     }
 
     assert(haveInitializedPoses_);

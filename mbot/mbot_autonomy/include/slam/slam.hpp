@@ -48,7 +48,7 @@ public:
                       bool localizationOnlyMode = false,
                       bool actionOnlyMode = false,
                       const std::string mapFile = std::string("current.map"),
-                      bool randomInitialPos = false,
+                      bool randomInitialPos = true,
                       mbot_lcm_msgs::pose_xyt_t initialPose = {0, 0, 0, 0});
 
     ~OccupancyGridSLAM();

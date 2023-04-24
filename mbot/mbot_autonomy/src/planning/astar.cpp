@@ -135,26 +135,37 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 {
     // TODO: prune the path to generate sparse waypoints
     std::vector<mbot_lcm_msgs::pose_xyt_t> path;
-    mbot_lcm_msgs::pose_xyt_t curPose;
+    std::vector<mbot_lcm_msgs::pose_xyt_t> temp_path;
     Point<double> curPoint;
     Point<double> parentPoint;
     for (int i = 0; i < nodes.size(); i++) {
+        mbot_lcm_msgs::pose_xyt_t curPose = {0, 0.0, 0.0, 0.0};
         curPoint = grid_position_to_global_position(Point<double>(nodes[i]->cell.x, nodes[i]->cell.y), distances);
         curPose.x = curPoint.x;
         curPose.y = curPoint.y;
 
-        if (i < nodes.size()-1 && i != 0) {
+        if (i < nodes.size() - 1 && i != 0) {
             parentPoint = grid_position_to_global_position(Point<double>(nodes[i-1]->cell.x, nodes[i-1]->cell.y), distances);
             curPose.theta = atan2(parentPoint.y-curPoint.y, parentPoint.x-curPoint.x);
         } else {
             curPose.theta = 0;
         }
 
-        path.push_back(curPose);
+        temp_path.push_back(curPose);
     }
-    std::reverse(path.begin(), path.end());
+
+    std::reverse(temp_path.begin(), temp_path.end());
+
+    path.push_back(temp_path[0]);
+
+    for (int i = 3; i < temp_path.size() - 2; i+=3) {
+        path.push_back(temp_path[i]);
+    }
+
+    path.push_back(temp_path[temp_path.size()-1]);
 
     return path;
+
 }
 
 bool is_in_list(Node* node, std::vector<Node*> list)

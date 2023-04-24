@@ -168,6 +168,7 @@ private:
             distr_x = std::uniform_real_distribution<double>(initial_x, end_x);
             distr_y = std::uniform_real_distribution<double>(initial_y, end_y);
             distr_theta = std::uniform_real_distribution<double>(-M_PI, M_PI);
+            //std::cout << "initial_x:"<<initial_x << ", end_x:" << end_x << ", distr_x:" << distr_x << std::endl;
         }
 
         mbot_lcm_msgs::pose_xyt_t get_pose()
