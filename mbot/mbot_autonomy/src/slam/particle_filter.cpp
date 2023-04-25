@@ -45,6 +45,18 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
 void ParticleFilter::initializeFilterRandomly(const OccupancyGrid& map)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
+    randomPoseGen.update_map(&map);
+    double sampleWeight = 1.0 / kNumParticles_;
+    std::cout << "initializeFilterRandomly"<< std::endl;
+    posteriorPose_ = randomPoseGen.get_pose();
+    
+    for (auto &p : posterior_)
+    {
+        p = randomPoseGen.get_particle();
+        p.weight = sampleWeight;
+    }
+    
+
 }
 
 void ParticleFilter::resetOdometry(const mbot_lcm_msgs::pose_xyt_t& odometry)
