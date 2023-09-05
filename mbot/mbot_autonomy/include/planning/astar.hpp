@@ -68,6 +68,7 @@ struct PriorityQueue
     Node* pop()
     {
         Node* n = Q.top();
+        // std::cout << n->cell.x << std::endl;
         Q.pop();
         int idx = -1;
         // Remove the node from the elements vector
@@ -120,6 +121,7 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
 std::vector<Node*> prune_node_path(std::vector<Node*> nodePath);
 bool is_in_list(Node* node, std::vector<Node*> list);
 Node* get_from_list(Node* node, std::vector<Node*> list);
+bool is_collision(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params);
 
 
 /**

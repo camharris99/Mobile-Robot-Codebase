@@ -7,7 +7,7 @@ sys.path.append("mbot_lcm_msgs")
 import lcm
 from mbot_lcm_msgs import mbot_motor_command_t
 
-LIN_VEL_CMD = 1.0 # 1 m/2
+LIN_VEL_CMD = 0.25 # 1 m/2
 ANG_VEL_CMD = 2.0 # 2 rad/sec
 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")

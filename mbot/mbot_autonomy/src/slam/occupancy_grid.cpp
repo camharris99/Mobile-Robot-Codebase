@@ -51,7 +51,7 @@ void OccupancyGrid::reset(void)
 
 
 bool OccupancyGrid::isCellInGrid(int x, int y) const
-{ 
+{
     bool xCoordIsValid = (x >= 0) && (x < width_);
     bool yCoordIsValid = (y >= 0) && (y < height_);
     return xCoordIsValid && yCoordIsValid;

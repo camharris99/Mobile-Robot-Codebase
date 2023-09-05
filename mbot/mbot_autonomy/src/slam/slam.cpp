@@ -35,8 +35,8 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
 , randomInitialPos_(randomInitialPos)
-, odomResetThreshDist_(0.05)
-, odomResetThreshAng_(0.08)  // ~5 degrees.
+, odomResetThreshDist_(1000.0)
+, odomResetThreshAng_(1000.0)  // ~5 degrees.
 , mapFile_(mapFile)
 , initialPose_(initialPose)
 {
@@ -177,7 +177,6 @@ void OccupancyGridSLAM::handleLaser(const lcm::ReceiveBuffer* rbuf, const std::s
 void OccupancyGridSLAM::handleOdometry(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const mbot_lcm_msgs::odometry_t* odometry)
 {
     std::lock_guard<std::mutex> autoLock(dataMutex_);
-
     mbot_lcm_msgs::pose_xyt_t odomPose;
     odomPose.utime = odometry->utime;
     odomPose.x = odometry->x;
@@ -295,10 +294,12 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
         currentPose_.utime  = currentScan_.times.back();
         haveInitializedPoses_ = true;
 
-        if (randomInitialPos_)
+        if (randomInitialPos_) {
             filter_.initializeFilterRandomly(map_);
-        else
+        }
+        else {
             filter_.initializeFilterAtPose(previousPose_);
+        }
     }
 
     assert(haveInitializedPoses_);
@@ -307,14 +308,28 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
 
 void OccupancyGridSLAM::updateLocalization(void)
 {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+
     if(haveMap_ && (mode_ != mapping_only))
     {
         previousPose_ = currentPose_;
         if(mode_ == action_only){
+
             currentPose_  = filter_.updateFilterActionOnly(currentOdometry_);
         }
         else{
+            // time
+            // auto start = clock::now();
+
             currentPose_  = filter_.updateFilter(currentOdometry_, currentScan_, map_);
+            // std::cout << currentPose_.x << ", " << currentPose_.y << ", " << currentPose_.theta << ", " << currentOdometry_.x << ", " << currentOdometry_.y << ", " << currentOdometry_.theta << std::endl;
+
+            // auto end = clock::now();
+            // std::cout << duration_cast<nanoseconds>(end-start).count() << "\n";
+
+            // time again
         }
 
         auto particles = filter_.particles();
